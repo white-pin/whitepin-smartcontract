@@ -36,20 +36,6 @@ type user struct {
 	} `json:"BuyAvg"`
 }
 
-// Trade data-set
-type trade struct {
-	TradeId string `json:"TradeId"`
-	SellerTkn string `json:"SellerTkn"`
-	BuyerTkn string `json:"BuyerTkn"`
-	Date time.Time `json:"Date"`
-	Close struct {
-		SellDone bool `json:"SellDone"`
-		BuyDone bool `json:"BuyDone"`
-		SellDate time.Time `json:"SellDate"`
-		BuyDate time.Time `json:"BuyDate"`
-	}
-}
-
 // ===================================================================================
 // Main
 // ===================================================================================
@@ -72,9 +58,9 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	fmt.Println("invoke is running " + function)
 
 	// Handle different functions
-	if function == "initMarble" { //create a new marble
-		return t.initMarble(stub, args)
-	} else if function == "transferMarble" { //change owner of a specific marble
+	if function == "createTrade" { //create a new Trade
+		return t.createTrade(stub, args)
+	} else if function == "closeTrade" { //change owner of a specific marble
 		return t.transferMarble(stub, args)
 	}
 
@@ -82,6 +68,14 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 }
 
 
-func (t *EvaluationChaincode) initMarble(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+// TODO 거래 생성
+func (t *EvaluationChaincode) createTrade(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	return shim.Success(nil)
 }
+
+// TODO 거래 종료(구매자 or 판매자) : 둘다 종료해야 최종 종료처리됨
+func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	return shim.Success(nil)
+}
+
+// TODO meta 점수 등록(구매자 or 판매자) : 둘다 등록해야 최종 등록됨
