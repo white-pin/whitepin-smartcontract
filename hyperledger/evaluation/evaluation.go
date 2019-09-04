@@ -45,11 +45,9 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "addScoreMeta": return t.addScoreMeta(stub, args) // 임시 평가점수 저장
 	case "queryScoreMeta": return t.queryScoreMeta(stub, args) // 임시 평가정수 조회
 	default:
-		err := errors.New("No matched function.")
+		err := errors.Errorf("No matched function. : %s", function)
 		return shim.Error(err.Error())
 	}
-
-	return shim.Success(nil)
 }
 
 

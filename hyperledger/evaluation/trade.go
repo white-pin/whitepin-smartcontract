@@ -12,7 +12,7 @@ type Trade struct {
 	TradeId string `json:"TradeId"`
 	ServiceCode string `json:"ServiceCode"`
 	SellerTkn string `json:"SellerTkn"`
-	BuyerTkn string `json:"BuyerTkn"`
+	BuyerTkn string `json:"SellerTkn"`
 	Date time.Time `json:"Date"`
 	Close struct {
 		SellDone bool `json:"SellDone"`
