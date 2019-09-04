@@ -1,0 +1,207 @@
+# Hyperledger Chaincode
+
+## Evaluation
+
+### 거래의 평가
+
+거래는 판매자와 구매자 모두 *공통으로 평가*할 수 있는 **상대방의 태도**에 대해서 평가할 수 있도록 `평가 항목`이 구성되어 있다.
+`평가항목`은 **3**개이다.
+
+#### 평가항목
+
+```
+1. 거래는 명시된대로 잘 진행 되었습니까? (상품에 문제가 없는지 또는 서비스에 문제는 없었는지, 기간은 잘 지켜졌는지 등)
+2. 거래를 진행하는데 상대방의 태도가 우수했습니까? (반말, 욕설등을 사용하지 않았는지)
+3. 필요하다면 상대방과 다시 거래하실 의향이 있으십니까? (재구매 또는 재방문 의향)
+```
+
+#### 평가방법
+
+아래와 같이 점수로 환산하며, 점수를 거래정보에 저장할때에는 배열로 평가항목 1,2,3의 순서대로 저정한다. 평가를 하지 않은 경우 모든 항목에 0점 처리하며, 평가점수를 집계할때 제외한다.
+
+```
+(1점) 매우 아니다. -강한 부정
+(2점) 아니다. -부정
+(3점) 보통이다.
+(4점) 그렇다. -긍정
+(5점) 매우 그렇다. -강한 긍정
+```
+
+#### 평가의 활용
+
+평가점수를 집계한 데이터는 사용자 data-set에 저장한다. 사용자 data-set에서는 평가점수의 합을 저장하며, 평균 점수는 총 거래량으로 나누어 계산한다.  
+판매 또는 구매 어느 한쪽의 거래량이 많은 사용자에 대해서는 총 평균 점수보다 판매시 평균점수, 구매시 평균점수를 구분하는 것이 신뢰도를 가늠하는데 효율적일 수 있기 때문에
+구분하여 제공한다.
+
+###### 예시
+```
+판매 평균점수 = 판매 평가점수 합 / 평가 유효 판매량
+판매 평균점수 = 판매 평가점수 합 / (총 판매량 - 평가받지 않은 판매량)
+
+구매 평균점수 = 구매 평가점수 합 / 평가 유효 구매량
+구매 평균점수 = 구매 평가점수 합 / (총 구매량 - 평가받지 않은 구매량)
+```  
+ 
+---
+
+### Data-set
+
+#### Trade
+
+###### 설명
+
+```
+TradeId : 거래에 대한 ID이며 hash값을 문자열로 저장한다. (data-set key)
+ServiceCode : 서비스 코드는 화이트핀 프로젝트의 하위 서비스 제공자들에 대한 코드이다. 거래를 발생시킨 서비스가 어디인지 규명할때 사용한다.  
+SellerTkn : 판매자 토큰. 판매자가 누구인지 확인할 때 사용하는 고유한 ID이며 hash값을 문자열로 저장한다.  
+BuyerTkn : 구매자 토큰. 구매자가 누구인지 확인할 때 사용하는 고유한 ID이며 hash값을 문자열로 저장한다.  
+Date : 거래가 생성된 시점, 즉 구매자가 구매 요청을 한 시각을 의미한다.
+Close : 거래를 확정하는 시점.  
+	SellDone : 판매자가 거래를 확정했는지 여부 (true : 확정, false : 미확정)  
+	BuyDone : 구매자가 거래를 확정했는지 여부 (true : 확정, false : 미확정)
+	SellDate : 판매자가 거래를 확정한 시각.
+	BuyDate : 구매자가 거래를 확정한 시각.  
+Score : 거래에 대한 평가 점수  
+	SellScore : 판매자의 평가 점수. (판매자가 받은 평가 점수, 구매자가 판매자를 평가한 점수)
+	BuyScore : 구매자의 평가 점수. (구매자가 받은 평가 점수, 판매자가 구매자를 평가한 점수)
+```
+
+###### 예시
+```
+{
+    TradeId:"0xA665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3",
+    ServiceCode:"Code11",
+    SellerTkn:"0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4",
+    BuyerTkn:"5994471ABB01112AFCC18159F6CC74B4F511B99806DA59B3CAF5A9C173CACFC5",
+    Date:"20190904143256",
+    Close:{
+        SellDone:"",
+        BuyDone:"",
+        SellDate:"",
+        BuyDate:""
+    },
+    Score:{
+        SellScore:[5, 4, 3],
+        BuyScore:[2, 5, 3]
+    }
+}
+```
+
+#### ScoreMeta
+
+###### 설명
+```
+ScoreKey : 임시 평가점수에 대한 키로 사용되며 무작위 값이다. (data-set key)
+TradeId : 거래에 대한 ID이며 hash값을 문자열로 저장한다. (Trade data-set과 동일)
+Score : 거래에 대한 상호 평가 점수.
+    SellScore : 판매자의 평가 점수. (구매자가 판매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서) 
+    BuyScore : 구매자의 평가 점수. (판매자가 구매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서)
+```
+
+###### 예시
+```
+{
+    ScoreKey:"0x0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4"
+    TradeId:"0xA665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3"
+    Score:{
+        SellScore:"BE736DE7249081C95A41CBAF762A92B95E280DE155CACBFBF480E0059FAF88A6",
+        BuyScore:"C78BBE24FCC51F8900F2D50FF4894A2136C6FBCF2CE321FD0D94C78E5F234C68"
+    }
+}
+```
+
+
+#### User
+
+###### 설명
+```
+UserTkn : 사용자 토큰. 사용자가 누구인지 확인할 때 사용하는 고유한 ID이며 hash값을 문자열로 저장한다. (data-set key)
+SellAmt : 판매한 거래의 양.
+BuyAmt : 구매한 거래의 양.
+SellEx : 판매시, 평가받지 않은 거래의 양. (0점 처리된 판매량)
+BuyEx : 구매시, 평가받지 않은 거래의 양. (0점 처리된 구매량)
+Date : 사용자 생성날짜
+SellSum : 판매 평가점수의 합
+    TotSum : 판매에 대해 받은 평가점수의 합.
+    EvalSum01 : 판매에 대해 1번 질문에 대하여 받은 평가점수의 합.
+    EvalSum02 : 판매에 대해 2번 질문에 대하여 받은 평가점수의 합.
+    EvalSum03 : 판매에 대해 3번 질문에 대하여 받은 평가점수의 합.
+BuySum : 구매 평가점수의 합
+    TotSum : 구매에 대해 받은 평가점수의 합.
+    EvalSum01 : 구매에 대해 1번 질문에 대하여 받은 평가점수의 합.
+    EvalSum02 : 구매에 대해 2번 질문에 대하여 받은 평가점수의 합.
+    EvalSum03 : 구매에 대해 3번 질문에 대하여 받은 평가점수의 합.
+TradeSum : 전체 거래 평가점수의 합
+    TotSum : 구매에 대해 받은 평가점수의 합.
+    EvalSum01 : 전체 거래에 대해 1번 질문에 대하여 받은 평가점수의 합.
+    EvalSum02 : 전체 거래에 대해 2번 질문에 대하여 받은 평가점수의 합.
+    EvalSum03 : 전체 거래에 대해 3번 질문에 대하여 받은 평가점수의 합. 
+```
+
+###### 예시
+```
+{
+    UserTkn:"0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4",
+    SellAmt:15230,
+    BuyAmt:24,
+    SellEx:2367,
+    BuyEx:4,
+    Date:"20190904143256"
+    SellSum:{
+        TotSum:60920
+        EvalSum01:20306
+        EvalSum02:19250
+        EvalSum03:21364
+    },
+    BuySum:{
+        TotSum:108
+        EvalSum01:34
+        EvalSum02:41
+        EvalSum03:33
+    },
+    TradeSum:{
+        TotSum:61028
+        EvalSum01:20340
+        EvalSum02:19291
+        EvalSum03:21397
+}
+```
+
+
+### Test 방법
+
+#### 사용자 생성
+
+###### 설명
+```
+peer chaincode invoke -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["addUser","[UserTkn]"]}'
+```
+
+###### 예시
+```
+peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["addUser","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD"]}'
+```
+ 
+#### 거래 생성
+
+###### 설명
+```
+peer chaincode invoke -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["createTrade","[TradeId]","[ServiceCode]","[SellerTkn]","[BuyerTkn]"]}'
+```
+
+###### 예시
+```
+peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["createTrade","0xF6E0A1E2AC41945A9AA7FF8A8AAA0CEBC12A3BCC981A929AD5CF810A090E11AE","code01","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","0xDF7E70E5021544F4834BBEE64A9E3789FEBC4BE81470DF629CAD6DDB03320A5C"]}'
+```
+
+#### 거래 완료
+
+###### 설명
+```
+peer chaincode invoke -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["closeTrade","[TradeId]","[ServiceCode]","[SellerTkn]","[BuyerTkn]"]}'
+```
+
+###### 예시
+```
+peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["closeTrade","0xF6E0A1E2AC41945A9AA7FF8A8AAA0CEBC12A3BCC981A929AD5CF810A090E11AE","code01","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","0xDF7E70E5021544F4834BBEE64A9E3789FEBC4BE81470DF629CAD6DDB03320A5C"]}'
+```
