@@ -59,7 +59,7 @@ func GetTradeWithId(stub shim.ChaincodeStubInterface, tradeId string) (Trade, er
 }
 
 
-// TODO 거래 가져오기 query 필요
+// 거래 가져오기 query 필요
 func GetTradeWithQueryString(stub shim.ChaincodeStubInterface, queryString string) ([]byte, error) {
 
 	resultsIterator, err := stub.GetQueryResult(queryString)
