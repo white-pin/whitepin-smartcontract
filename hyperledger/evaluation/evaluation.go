@@ -45,6 +45,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "addScoreMeta": return t.addScoreMeta(stub, args) // 임시 평가점수 저장
 	case "queryScoreMeta": return t.queryScoreMeta(stub, args) // 임시 평가정수 조회
 	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
+	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구마재)
 	default:
 		err := errors.Errorf("No matched function. : %s", function)
 		return shim.Error(err.Error())
@@ -52,7 +53,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 }
 
 
-// 사용자 생성
+// 사용자 생성 +
 func (t *EvaluationChaincode) addUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -68,7 +69,7 @@ func (t *EvaluationChaincode) addUser(stub shim.ChaincodeStubInterface, args []s
 }
 
 
-// 사용자 조회
+// 사용자 조회 +
 func (t *EvaluationChaincode) queryUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -89,7 +90,7 @@ func (t *EvaluationChaincode) queryUser(stub shim.ChaincodeStubInterface, args [
 }
 
 
-// 거래 생성
+// 거래 생성 +
 func (t *EvaluationChaincode) createTrade(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
@@ -105,7 +106,7 @@ func (t *EvaluationChaincode) createTrade(stub shim.ChaincodeStubInterface, args
 }
 
 
-// 거래 조회
+// 거래 조회 +
 func (t *EvaluationChaincode) queryTradeWithId(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -126,7 +127,7 @@ func (t *EvaluationChaincode) queryTradeWithId(stub shim.ChaincodeStubInterface,
 }
 
 
-// meta 점수 생성
+// meta 점수 생성 +
 func (t *EvaluationChaincode) addScoreMeta(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments. Expecting 2")
@@ -142,7 +143,7 @@ func (t *EvaluationChaincode) addScoreMeta(stub shim.ChaincodeStubInterface, arg
 }
 
 
-// meta 점수 조회
+// meta 점수 조회 +
 func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -163,7 +164,7 @@ func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, a
 }
 
 
-// 거래 조회 query 작성 후 추가
+// 거래 조회 query 작성 후 추가 +
 func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -186,11 +187,7 @@ func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args 
 		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}
 
-	tradeId := args[0]
-	userTkn := args[1]
-	division := args[2]
-
-	err := CloseTrade(stub , tradeId, userTkn, division)
+	err := CloseTrade(stub , args[0], args[1], args[2])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
