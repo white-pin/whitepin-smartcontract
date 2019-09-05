@@ -164,10 +164,18 @@ func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, a
 
 // TODO 거래 조회 query 작성 후 추가
 func (t *EvaluationChaincode) queryTradeWithUserTkn(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 4 {
-		return shim.Error("Incorrect number of arguments. Expecting 4")
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
-	return shim.Success(nil)
+
+	// TODO selector 유효성 검증
+
+	byteData, err := GetTradeWithQueryString(stub, args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(byteData)
 }
 
 
