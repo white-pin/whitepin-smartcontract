@@ -98,16 +98,16 @@ func GetTradeWithQueryString(stub shim.ChaincodeStubInterface, queryString strin
 
 
 // 거래 완료하기 (구매자, 판매자 각각) {TradeId, UserTkn, sell/buy}
-func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string, division string) error {
+func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string) error {
 	trade, err := getTrade(stub, tradeId)
 	if err != nil {
 		return err
 	}
 
-	switch division {
-	case "sell": trade.Close.SellDone = true
+	switch userTkn {
+	case trade.SellerTkn: trade.Close.SellDone = true
 	trade.Close.SellDate = time.Now()
-	case "buy": trade.Close.BuyDone = true
+	case trade.BuyerTkn: trade.Close.BuyDone = true
 	trade.Close.BuyDate = time.Now()
 	default:
 		err := errors.New("division is available \"sell\" and \"buy\" only.")

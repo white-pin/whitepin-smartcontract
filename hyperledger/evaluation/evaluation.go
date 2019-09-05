@@ -181,13 +181,13 @@ func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInt
 }
 
 
-// 거래 완료 처리(division, "sell" : 구매자 / "buy" : 판매자) : 둘다 완료처리해야 최종 완료됨
+// 거래 완료 처리 판매자, 구매자 둘다 완료처리해야 최종 완료됨. args[1]은 userTkn으로, 판매자, 구매자인지 판별하여 해당 대상에 대해서 완료처리.
 func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 3 {
-		return shim.Error("Incorrect number of arguments. Expecting 3")
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
-	err := CloseTrade(stub , args[0], args[1], args[2])
+	err := CloseTrade(stub , args[0], args[1])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
