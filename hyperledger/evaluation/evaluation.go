@@ -181,7 +181,7 @@ func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInt
 }
 
 
-// 거래 완료 처리 판매자, 구매자 둘다 완료처리해야 최종 완료됨. args[1]은 userTkn으로, 판매자, 구매자인지 판별하여 해당 대상에 대해서 완료처리.
+// 거래 완료 처리. 판매자, 구매자 둘다 완료처리해야 최종 완료됨. args[1]은 userTkn으로, 판매자, 구매자인지 판별하여 해당 대상에 대해서 완료처리. +
 func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments. Expecting 2")
@@ -203,13 +203,9 @@ func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, 
 	scoreKey := args[0]
 	scoreOrigin := args[1] // "[3,4,5]" 의 format
 	division := args[2]
-	//aeskey := args[3]
 
 	// TODO 암호화하는 부분 변경필요 (현재는 단순 AES Encryption)
-	//chiper, err := sw.AESCBCPKCS7Encrypt(bytes.NewBufferString(aeskey).Bytes(), bytes.NewBufferString(scoreOrigin).Bytes())
-	//if err != nil {
-	//	return shim.Error(err.Error())
-	//}
+
 	score := scoreOrigin
 	//scoreOrigin = scoreOrigin[1:len(scoreOrigin)-1] // "3,4,5" 의 format
 

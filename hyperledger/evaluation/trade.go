@@ -110,7 +110,7 @@ func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string
 	case trade.BuyerTkn: trade.Close.BuyDone = true
 	trade.Close.BuyDate = time.Now()
 	default:
-		err := errors.New("division is available \"sell\" and \"buy\" only.")
+		err := errors.Errorf("user %s is not both seller and buyer.", userTkn)
 		return err
 	}
 
