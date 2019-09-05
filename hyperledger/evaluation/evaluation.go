@@ -46,6 +46,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryScoreMeta": return t.queryScoreMeta(stub, args) // 임시 평가정수 조회
 	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구마재)
+	case "enrollMetaScore": return t.enrollMetaScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구마재)
 	default:
 		err := errors.Errorf("No matched function. : %s", function)
 		return shim.Error(err.Error())
