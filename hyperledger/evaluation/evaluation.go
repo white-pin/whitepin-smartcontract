@@ -44,7 +44,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryTradeWithId": return t.queryTradeWithId(stub, args) // 거래 조회
 	case "addScoreMeta": return t.addScoreMeta(stub, args) // 임시 평가점수 저장
 	case "queryScoreMeta": return t.queryScoreMeta(stub, args) // 임시 평가정수 조회
-	case "queryTradeWithUserTkn": return t.queryTradeWithUserTkn(stub, args) // 거래 조회 (query string 사용)
+	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
 	default:
 		err := errors.Errorf("No matched function. : %s", function)
 		return shim.Error(err.Error())
@@ -164,7 +164,7 @@ func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, a
 
 
 // 거래 조회 query 작성 후 추가
-func (t *EvaluationChaincode) queryTradeWithUserTkn(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
