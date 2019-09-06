@@ -235,8 +235,8 @@ func (t *EvaluationChaincode) queryMetaScoreWithCondition(stub shim.ChaincodeStu
 
 // 거래 점수 등록
 func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 2")
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
 	// TODO query 부분 작성되면 주석 변경

@@ -71,30 +71,19 @@ func GetScoreMetaWithQueryString(stub shim.ChaincodeStubInterface, queryString s
 	}
 
 	buffer := bytes.Buffer{}
-	buffer.WriteString("[")
 
-	bArrayMemberAlreadyWritten := false
-	for resultsIterator.HasNext() {
+	if resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
-		// Add a comma before array members, suppress it for the first array member
-		if bArrayMemberAlreadyWritten == true {
-			buffer.WriteString(",")
-		}
-		buffer.WriteString("{\"Key\":")
-		buffer.WriteString("\"")
-		buffer.WriteString(queryResponse.Key)
-		buffer.WriteString("\"")
-
-		buffer.WriteString(", \"Record\":")
-		// Record is a JSON object, so we write as-is
 		buffer.WriteString(string(queryResponse.Value))
-		buffer.WriteString("}")
-		bArrayMemberAlreadyWritten = true
 	}
-	buffer.WriteString("]")
+	if resultsIterator.HasNext() {
+		err := errors.New("meta score must matched only 1 record.")
+		return nil, err
+	}
+	defer resultsIterator.Close()
 
 	return buffer.Bytes(), nil
 }
