@@ -244,10 +244,9 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
-	tradeId := args[0]
 	// TODO query 부분 작성되면 주석 변경
 
-	byteData, err := GetScoreMetaWithQueryString(stub, tradeId)
+	byteData, err := GetScoreMetaWithQueryString(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -262,11 +261,12 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		return shim.Error(err.Error())
 	}
 
+	tradeId := scoreMeta.TradeId
 	sellScoreChiper := scoreMeta.Score.SellScore // "[3,4,5]" 의 format
 	buyScoreChiper := scoreMeta.Score.BuyScore // "[3,4,5]" 의 format
 
-	var sellScore []int // [3, 4, 5] format의 int array
-	var buyScore []int // [3, 4, 5] format의 int array
+	var sellScore []int // [3,4,5] format의 int array
+	var buyScore []int // [3,4,5] format의 int array
 	for _, val := range strings.Split(sellScoreChiper[1:len(sellScoreChiper)-1], ",") {
 		intVal, err := strconv.Atoi(val)
 		if err != nil {
@@ -274,12 +274,20 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		}
 		sellScore = append(sellScore, intVal)
 	}
+	if len(sellScore) != 3 { // 평가 질문이 3개 이므로 점수도 3개
+		err := errors.New("Seller score has error.")
+		return shim.Error(err.Error())
+	}
 	for _, val := range strings.Split(buyScoreChiper[1:len(buyScoreChiper)-1], ",") {
 		intVal, err := strconv.Atoi(val)
 		if err != nil {
 			return shim.Error(err.Error())
 		}
 		buyScore = append(buyScore, intVal)
+	}
+	if len(buyScore) != 3 { // 평가 질문이 3개 이므로 점수도 3개
+		err := errors.New("Buyer score has error.")
+		return shim.Error(err.Error())
 	}
 
 	err = EvaluateTrade(stub, tradeId, sellScore, buyScore)
