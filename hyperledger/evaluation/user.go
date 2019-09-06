@@ -139,24 +139,17 @@ func UpdateUserScore(stub shim.ChaincodeStubInterface, userTkn string, score []i
 
 
 // 사용자 조회
-func GetUser(stub shim.ChaincodeStubInterface, userTkn string) (User, error){
-	var user User
+func GetUser(stub shim.ChaincodeStubInterface, userTkn string) ([]byte, error){
 
 	byteData, err := stub.GetState(userTkn)
 	if err != nil {
 		err = errors.Errorf("Failed to get User : UserTkn is \"%s\"", userTkn)
-		return User{}, err
+		return nil, err
 	}
 	if byteData == nil {
 		err := errors.Errorf("There is no user : UserTkn \"%s\"", userTkn)
-		return User{}, err
+		return nil, err
 	}
 
-	err = json.Unmarshal(byteData, &user)
-	if err != nil {
-		err = errors.New("Failed to json decoding.")
-		return User{}, err
-	}
-
-	return user, nil
+	return byteData, nil
 }

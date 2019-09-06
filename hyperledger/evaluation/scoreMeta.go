@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -42,38 +43,62 @@ func AddScoreMeta(stub shim.ChaincodeStubInterface, scoreKey string, tradeId str
 }
 
 
-// 점수 가져오기 (ScoreKey)
-func GetScoreMetaWithKey(stub shim.ChaincodeStubInterface, scoreKey string) (ScoreMeta, error) {
-	var scoreMeta ScoreMeta
+// 점수 가져오기 (key)
+func GetScoreMetaWithKey(stub shim.ChaincodeStubInterface, scoreKey string) ([]byte, error) {
 	
 	byteData, err := stub.GetState(scoreKey)
 	if err != nil {
 		err = errors.Errorf("Failed to get Score meta : ScoreKey \"%s\"", scoreKey)
-		return ScoreMeta{}, err
+		return nil, err
 	}
 	if byteData == nil {
 		err = errors.Errorf("There is no Score meta : ScoreKey \"%s\"", scoreKey)
-		return ScoreMeta{}, err
+		return nil, err
 	}
 
-	err = json.Unmarshal(byteData, &scoreMeta)
+	return byteData, nil
+}
+
+
+// 점수 가져오기 (query)
+func GetScoreMetaWithQueryString(stub shim.ChaincodeStubInterface, queryString string) ([]byte, error) {
+
+	resultsIterator, err := stub.GetQueryResult(queryString)
 	if err != nil {
-		err = errors.New("Failed to json decoding.")
-		return ScoreMeta{}, err
+		return nil, err
 	}
 
-	return scoreMeta, nil
+	buffer := bytes.Buffer{}
+	buffer.WriteString("[")
+
+	bArrayMemberAlreadyWritten := false
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		// Add a comma before array members, suppress it for the first array member
+		if bArrayMemberAlreadyWritten == true {
+			buffer.WriteString(",")
+		}
+		buffer.WriteString("{\"Key\":")
+		buffer.WriteString("\"")
+		buffer.WriteString(queryResponse.Key)
+		buffer.WriteString("\"")
+
+		buffer.WriteString(", \"Record\":")
+		// Record is a JSON object, so we write as-is
+		buffer.WriteString(string(queryResponse.Value))
+		buffer.WriteString("}")
+		bArrayMemberAlreadyWritten = true
+	}
+	buffer.WriteString("]")
+
+	return buffer.Bytes(), nil
 }
 
 
-// TODO 점수 가져오기 (TradeId) query 필요
-func GetScoreMetaWithTradeId(stub shim.ChaincodeStubInterface, tradeId string) (ScoreMeta, error) {
-	var scoreMeta ScoreMeta
-	return scoreMeta, nil
-}
-
-
-// 점수 설정. division : "sell", "buy". sell인 경우는 판매자의 점수이고(구매자가 매긴 점수), buy인 경우는 구매자의 점수이다.(판매자가 매긴 점수)
+// 점수 설정. (key) division : "sell", "buy". sell인 경우는 판매자의 점수이고(구매자가 매긴 점수), buy인 경우는 구매자의 점수이다.(판매자가 매긴 점수)
 func SetScoreMetaWithKey(stub shim.ChaincodeStubInterface, scoreKey string, score string, division string) error {
 	var scoreMeta ScoreMeta
 
@@ -90,8 +115,8 @@ func SetScoreMetaWithKey(stub shim.ChaincodeStubInterface, scoreKey string, scor
 	}
 
 	switch division {
-	case "sell": scoreMeta.Score.SellScore = score
-	case "buy": scoreMeta.Score.BuyScore = score
+	case "sell": scoreMeta.Score.BuyScore = score
+	case "buy": scoreMeta.Score.SellScore = score
 	default:
 		err := errors.New("Division is wrong. Available value is \"sell\" and \"buy\"")
 		return err
@@ -114,7 +139,7 @@ func SetScoreMetaWithKey(stub shim.ChaincodeStubInterface, scoreKey string, scor
 }
 
 
-// TODO 점수 설정 (TradeId) query 필요
+// TODO 점수 설정 (query) division : "sell", "buy". sell인 경우는 판매자의 점수이고(구매자가 매긴 점수), buy인 경우는 구매자의 점수이다.(판매자가 매긴 점수)
 func SetScoreMetaWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, division string, score string) error {
 	return nil
 }

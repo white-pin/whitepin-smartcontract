@@ -47,6 +47,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구마재)
 	case "enrollMetaScore": return t.enrollMetaScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구마재)
+	case "queryMetaScoreWithCondition": return t.queryMetaScoreWithCondition(stub, args) // 임시 평가점수 조회 (query string 사용)
 	default:
 		err := errors.Errorf("No matched function. : %s", function)
 		return shim.Error(err.Error())
@@ -113,12 +114,7 @@ func (t *EvaluationChaincode) queryTradeWithId(stub shim.ChaincodeStubInterface,
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	trade, err := GetTradeWithId(stub, args[0])
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	byteData, err := json.Marshal(trade)
+	byteData, err := GetTradeWithId(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -139,7 +135,6 @@ func (t *EvaluationChaincode) addScoreMeta(stub shim.ChaincodeStubInterface, arg
 		return shim.Error(err.Error())
 	}
 
-
 	return shim.Success(nil)
 }
 
@@ -154,14 +149,13 @@ func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, a
 	if err != nil {
 		return shim.Error(err.Error())
 	}
-
-	byteData, err := json.Marshal(scoreMeta)
-	if err != nil {
+	if scoreMeta == nil {
+		err = errors.New("There is no matched data.")
 		return shim.Error(err.Error())
 	}
 
 	fmt.Println("Get meta score successfully.")
-	return shim.Success(byteData)
+	return shim.Success(scoreMeta)
 }
 
 
@@ -196,7 +190,7 @@ func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args 
 }
 
 
-// meta 점수 등록(구매자 or 판매자) : 둘다 등록해야 최종 등록됨
+// meta 점수 등록(구매자 or 판매자) : 둘다 등록해야 최종 등록됨 +
 func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
@@ -219,7 +213,23 @@ func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, 
 }
 
 
-// TODO meta 점수 조회
+// meta 점수 조회 (query)
+func (t *EvaluationChaincode) queryMetaScoreWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	buffer, err := GetScoreMetaWithQueryString(stub, args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	if buffer == nil {
+		err = errors.New("There is no matched data.")
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(buffer)
+}
 
 
 // 거래 점수 등록
@@ -230,12 +240,18 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 
 	tradeId := args[0]
 	// TODO query 부분 작성되면 주석 변경
-	// ------------------------------------------------------------
-	//scoremeta.GetScoreMetaWithTradeId(stub, tradeId)
-	scoreKey := args[1]
-	scoreMeta, err := GetScoreMetaWithKey(stub, scoreKey)
-	// ------------------------------------------------------------
 
+	byteData, err := GetScoreMetaWithQueryString(stub, tradeId)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	if byteData == nil {
+		err := errors.New("There is no matched data.")
+		return shim.Error(err.Error())
+	}
+
+	var scoreMeta ScoreMeta
+	err = json.Unmarshal(byteData, &scoreMeta)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
