@@ -14,6 +14,11 @@ import (
 type EvaluationChaincode struct {
 }
 
+type RecordType int
+const RecordTypeUser RecordType = 1
+const RecordTypeTrade RecordType = 2
+const RecordTypeScoreMeta RecordType = 3
+
 // ===================================================================================
 // Main
 // ===================================================================================
@@ -48,6 +53,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구마재)
 	case "enrollMetaScore": return t.enrollMetaScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구마재)
 	case "queryMetaScoreWithCondition": return t.queryMetaScoreWithCondition(stub, args) // 임시 평가점수 조회 (query string 사용)
+	case "enrollScore": return t.enrollScore(stub, args) // 거래 점수 등록 (판매자, 구매자 동시에)
 	default:
 		err := errors.Errorf("No matched function. : %s", function)
 		return shim.Error(err.Error())
@@ -192,8 +198,8 @@ func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args 
 
 // meta 점수 등록(구매자 or 판매자) : 둘다 등록해야 최종 등록됨 +
 func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 4 {
-		return shim.Error("Incorrect number of arguments. Expecting 4")
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}
 	scoreKey := args[0]
 	scoreOrigin := args[1] // "[3,4,5]" 의 format
@@ -213,7 +219,7 @@ func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, 
 }
 
 
-// meta 점수 조회 (query)
+// meta 점수 조회 (query) +
 func (t *EvaluationChaincode) queryMetaScoreWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")

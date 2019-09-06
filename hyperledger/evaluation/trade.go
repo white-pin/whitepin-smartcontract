@@ -10,6 +10,7 @@ import (
 
 // Trade data-set
 type Trade struct {
+	RecType RecordType `json:"RecType"` // Trade : 2
 	TradeId string `json:"TradeId"`
 	ServiceCode string `json:"ServiceCode"`
 	SellerTkn string `json:"SellerTkn"`
@@ -31,6 +32,8 @@ type Trade struct {
 // 거래 등록하기 {TradeId, ServiceCode, SellerTkn, BuyerTkn}
 func CreateTrade(stub shim.ChaincodeStubInterface, tradeId string, serviceCode string, sellerTkn string, buyerTkn string) error {
 	var trade Trade
+
+	trade.RecType = RecordTypeTrade
 	trade.TradeId = tradeId
 	trade.ServiceCode = serviceCode
 	trade.SellerTkn = sellerTkn

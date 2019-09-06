@@ -9,6 +9,7 @@ import (
 
 // User data-set
 type User struct {
+	RecType RecordType `json:"RecType"` // User : 1
 	UserTkn string `json:"UserTkn"`
 	SellAmt int `json:"SellAmt"`
 	BuyAmt int `json:"BuyAmt"`
@@ -51,6 +52,7 @@ func AddUser(stub shim.ChaincodeStubInterface, userTkn string) error {
 		return err
 	}
 
+	user.RecType = RecordTypeUser
 	user.UserTkn = userTkn
 	user.Date = time.Now()
 

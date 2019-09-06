@@ -12,6 +12,7 @@ import (
 // 특정 조건이 달성되면 점수를 실제 거래 데이터에 저장하고 공개한다.
 // TODO 위에서 언급한 특정 조건 지정.
 type ScoreMeta struct {
+	RecType RecordType `json:"RecType"` // ScoreMeta : 3
 	ScoreKey string `json:"ScoreKey"`
 	TradeId string `json:"TradeId"`
 	Score struct {
@@ -25,6 +26,7 @@ type ScoreMeta struct {
 func AddScoreMeta(stub shim.ChaincodeStubInterface, scoreKey string, tradeId string) error {
 	var scoreMeta ScoreMeta
 
+	scoreMeta.RecType = RecordTypeScoreMeta
 	scoreMeta.ScoreKey = scoreKey
 	scoreMeta.TradeId = tradeId
 
@@ -115,8 +117,8 @@ func SetScoreMetaWithKey(stub shim.ChaincodeStubInterface, scoreKey string, scor
 	}
 
 	switch division {
-	case "sell": scoreMeta.Score.BuyScore = score
-	case "buy": scoreMeta.Score.SellScore = score
+	case "sell": scoreMeta.Score.SellScore = score
+	case "buy": scoreMeta.Score.BuyScore = score
 	default:
 		err := errors.New("Division is wrong. Available value is \"sell\" and \"buy\"")
 		return err

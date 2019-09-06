@@ -1,1 +1,1 @@
-{"index":{"fields":["ScoreKey","TradeId"]},"ddoc":"indexScoreMetaDoc", "name":"indexScoreMeta","type":"json"}
+{"index":{"fields":["ScoreKey","TradeId","RecType"]},"ddoc":"indexScoreMetaDoc", "name":"indexScoreMeta","type":"json"}
