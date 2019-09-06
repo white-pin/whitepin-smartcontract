@@ -196,7 +196,7 @@ func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, 
 	if len(args) != 3 {
 		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}
-	scoreKey := args[0]
+	tradeId := args[0]
 	scoreOrigin := args[1] // "[3,4,5]" 의 format
 	division := args[2]
 
@@ -205,7 +205,7 @@ func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, 
 	score := scoreOrigin
 	//scoreOrigin = scoreOrigin[1:len(scoreOrigin)-1] // "3,4,5" 의 format
 
-	err := SetScoreMetaWithKey(stub, scoreKey, score, division)
+	err := SetScoreMetaWithTradeId(stub, tradeId, score, division)
 	if err != nil {
 		return shim.Error(err.Error())
 	}

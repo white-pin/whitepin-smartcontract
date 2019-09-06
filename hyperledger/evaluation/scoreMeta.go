@@ -130,7 +130,57 @@ func SetScoreMetaWithKey(stub shim.ChaincodeStubInterface, scoreKey string, scor
 }
 
 
-// TODO 점수 설정 (query) division : "sell", "buy". sell인 경우는 판매자의 점수이고(구매자가 매긴 점수), buy인 경우는 구매자의 점수이다.(판매자가 매긴 점수)
-func SetScoreMetaWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, division string, score string) error {
+// 점수 설정 (query) division : "sell", "buy". sell인 경우는 판매자의 점수이고(구매자가 매긴 점수), buy인 경우는 구매자의 점수이다.(판매자가 매긴 점수)
+func SetScoreMetaWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, score string, division string) error {
+	var scoreMeta ScoreMeta
+	var byteData []byte
+
+	queryString := "{\"selector\":[\"TradeId\":\"" + tradeId + "\",\"RecType\":3]}"
+
+	resultsIterators, err := stub.GetQueryResult(queryString)
+	if err != nil {
+		err = errors.Errorf("Failed to get Trade : query string is wrong : \"%s\"", queryString)
+		return err
+	}
+
+	if resultsIterators.HasNext() {
+		response, err := resultsIterators.Next()
+		if err != nil {
+			return err
+		}
+		byteData = response.Value
+	}
+	if resultsIterators.HasNext() {
+		err := errors.New("meta score must matched only 1 record.")
+		return err
+	}
+
+	err = json.Unmarshal(byteData, &scoreMeta)
+	if err != nil {
+		err = errors.New("Failed to json decoding.")
+		return err
+	}
+
+	switch division {
+	case "sell": scoreMeta.Score.SellScore = score
+	case "buy": scoreMeta.Score.BuyScore = score
+	default:
+		err := errors.New("Division is wrong. Available value is \"sell\" and \"buy\"")
+		return err
+	}
+
+	inputData, err := json.Marshal(scoreMeta)
+	if err != nil {
+		err := errors.New("Failed to json encoding.")
+		return err
+	}
+
+	err = stub.PutState(scoreMeta.ScoreKey, inputData)
+	if err != nil {
+		err := errors.New("Failed to store data.")
+		return err
+	}
+	fmt.Printf("Set \"%s\" score successfuly.", division)
+
 	return nil
 }
