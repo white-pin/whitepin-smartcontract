@@ -83,12 +83,7 @@ func (t *EvaluationChaincode) queryUser(stub shim.ChaincodeStubInterface, args [
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	user, err := GetUser(stub, args[0])
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	byteData,err := json.Marshal(user)
+	byteData, err := GetUser(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
