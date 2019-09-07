@@ -1,18 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-	
 	"encoding/json"
+	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/pkg/errors"
+	"strconv"
+	"strings"
 )
 
 type EvaluationChaincode struct {
 }
+
+// TODO queryString을 parameter로 받는 것들 가능한 일반 변수로 변경하고 내부에서 query string 조합.
 
 type RecordType int
 const RecordTypeUser RecordType = 1
@@ -61,7 +62,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 }
 
 
-// 사용자 생성 +
+// 사용자 생성
 func (t *EvaluationChaincode) addUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -77,7 +78,7 @@ func (t *EvaluationChaincode) addUser(stub shim.ChaincodeStubInterface, args []s
 }
 
 
-// 사용자 조회 +
+// 사용자 조회
 func (t *EvaluationChaincode) queryUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -93,7 +94,7 @@ func (t *EvaluationChaincode) queryUser(stub shim.ChaincodeStubInterface, args [
 }
 
 
-// 거래 생성 +
+// 거래 생성
 func (t *EvaluationChaincode) createTrade(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
@@ -109,7 +110,7 @@ func (t *EvaluationChaincode) createTrade(stub shim.ChaincodeStubInterface, args
 }
 
 
-// 거래 조회 +
+// 거래 조회
 func (t *EvaluationChaincode) queryTradeWithId(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -125,7 +126,7 @@ func (t *EvaluationChaincode) queryTradeWithId(stub shim.ChaincodeStubInterface,
 }
 
 
-// meta 점수 생성 +
+// meta 점수 생성
 func (t *EvaluationChaincode) addScoreMeta(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments. Expecting 2")
@@ -140,7 +141,7 @@ func (t *EvaluationChaincode) addScoreMeta(stub shim.ChaincodeStubInterface, arg
 }
 
 
-// meta 점수 조회 +
+// meta 점수 조회
 func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -160,7 +161,7 @@ func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, a
 }
 
 
-// 거래 조회 query 작성 후 추가 +
+// 거래 조회 query 작성 후 추가
 func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -177,7 +178,7 @@ func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInt
 }
 
 
-// 거래 완료 처리. 판매자, 구매자 둘다 완료처리해야 최종 완료됨. args[1]은 userTkn으로, 판매자, 구매자인지 판별하여 해당 대상에 대해서 완료처리. +
+// 거래 완료 처리. 판매자, 구매자 둘다 완료처리해야 최종 완료됨. args[1]은 userTkn으로, 판매자, 구매자인지 판별하여 해당 대상에 대해서 완료처리.
 func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments. Expecting 2")
@@ -191,21 +192,50 @@ func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args 
 }
 
 
-// meta 점수 등록(구매자 or 판매자) : 둘다 등록해야 최종 등록됨 +
+// meta 점수 등록(구매자 or 판매자) : 둘다 등록해야 최종 등록됨
+//args[0] := tradeId
+//args[1] := scoreOrigin // "[3,4,5]" 의 format
+//args[2] := division
+//args[3] := key (encryption)
 func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 3 {
-		return shim.Error("Incorrect number of arguments. Expecting 3")
+	if len(args) != 4 {
+		return shim.Error("Incorrect number of arguments. Expecting 4")
 	}
-	tradeId := args[0]
-	scoreOrigin := args[1] // "[3,4,5]" 의 format
-	division := args[2]
 
-	// TODO 암호화하는 부분 변경필요 (현재는 단순 AES Encryption)
+	// AES_GCM 생성 및 키 설정
+	aes_gcm, err := GCM_Key(args[3])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
 
-	score := scoreOrigin
-	//scoreOrigin = scoreOrigin[1:len(scoreOrigin)-1] // "3,4,5" 의 format
+	// nonce 설정. (거래 데이터셋에서 시간 가져오기)
+	var trade Trade
+	rsltTrade, err := GetTradeWithId(stub, args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
 
-	err := SetScoreMetaWithTradeId(stub, tradeId, score, division)
+	err = json.Unmarshal(rsltTrade, &trade)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	date := trade.Date
+	aes_gcm.nonce = fmt.Sprintf("%d%02d%02dA%02d%02d%02d%09d",
+		date.Year(), date.Month(), date.Day(),
+		date.Hour(), date.Minute(), date.Second(), date.Nanosecond())
+
+	aes_gcm.plainTxt = args[1] // "[3,4,5]" 의 format
+
+	// 점수 암호화
+	err = aes_gcm.GCM_encrypt()
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	score := aes_gcm.chipherTxt
+
+	err = SetScoreMetaWithTradeId(stub, args[0], score, args[2])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -214,7 +244,7 @@ func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, 
 }
 
 
-// meta 점수 조회 (query) +
+// meta 점수 조회 (query)
 func (t *EvaluationChaincode) queryMetaScoreWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -239,8 +269,6 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	// TODO query 부분 작성되면 주석 변경
-
 	byteData, err := GetScoreMetaWithQueryString(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
@@ -257,12 +285,49 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 	}
 
 	tradeId := scoreMeta.TradeId
-	sellScoreChiper := scoreMeta.Score.SellScore // "[3,4,5]" 의 format
-	buyScoreChiper := scoreMeta.Score.BuyScore // "[3,4,5]" 의 format
+
+	// AES_GCM 생성 및 키 설정
+	aes_gcm, err := GCM_Key(args[3])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	// nonce 설정. (거래 데이터셋에서 시간 가져오기)
+	var trade Trade
+	rsltTrade, err := GetTradeWithId(stub, args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	err = json.Unmarshal(rsltTrade, &trade)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	date := trade.Date
+	aes_gcm.nonce = fmt.Sprintf("%d%02d%02dA%02d%02d%02d%09d",
+		date.Year(), date.Month(), date.Day(),
+		date.Hour(), date.Minute(), date.Second(), date.Nanosecond())
+
+	// 복호화 (sell)
+	aes_gcm.chipherTxt = scoreMeta.Score.SellScore // "[3,4,5]" 의 암호화된 format
+	err = aes_gcm.GCM_decrypt()
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	sellScorePlainTxt := aes_gcm.plainTxt
+
+	// 복호화 (buy)
+	aes_gcm.chipherTxt = scoreMeta.Score.BuyScore // "[3,4,5]" 의 암호화된 format
+	err = aes_gcm.GCM_decrypt()
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	buyScorePlainTxt := aes_gcm.plainTxt
 
 	var sellScore []int // [3,4,5] format의 int array
 	var buyScore []int // [3,4,5] format의 int array
-	for _, val := range strings.Split(sellScoreChiper[1:len(sellScoreChiper)-1], ",") {
+	for _, val := range strings.Split(sellScorePlainTxt[1:len(sellScorePlainTxt)-1], ",") {
 		intVal, err := strconv.Atoi(val)
 		if err != nil {
 			return shim.Error(err.Error())
@@ -273,7 +338,7 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		err := errors.New("Seller score has error.")
 		return shim.Error(err.Error())
 	}
-	for _, val := range strings.Split(buyScoreChiper[1:len(buyScoreChiper)-1], ",") {
+	for _, val := range strings.Split(buyScorePlainTxt[1:len(buyScorePlainTxt)-1], ",") {
 		intVal, err := strconv.Atoi(val)
 		if err != nil {
 			return shim.Error(err.Error())
