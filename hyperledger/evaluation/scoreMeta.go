@@ -30,6 +30,13 @@ func AddScoreMeta(stub shim.ChaincodeStubInterface, scoreKey string, tradeId str
 	scoreMeta.ScoreKey = scoreKey
 	scoreMeta.TradeId = tradeId
 
+	// 같은 scoreKey로 이미 임시 점수를 생성했는지 확인
+	_, err := GetScoreMetaWithKey(stub, scoreKey)
+	if err == nil {
+		err := errors.Errorf("The score key already used. : %s", scoreKey)
+		return err
+	}
+
 	byteData, err := json.Marshal(scoreMeta)
 	if err != nil {
 		err = errors.New("Failed to json encoding.")
@@ -63,7 +70,9 @@ func GetScoreMetaWithKey(stub shim.ChaincodeStubInterface, scoreKey string) ([]b
 
 
 // 점수 가져오기 (query)
-func GetScoreMetaWithQueryString(stub shim.ChaincodeStubInterface, queryString string) ([]byte, error) {
+func GetScoreMetaWithQueryString(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
+
+	queryString := "{\"selector\":[\"TradeId\":\"" + tradeId + "\",\"RecType\":3]}"
 
 	resultsIterator, err := stub.GetQueryResult(queryString)
 	if err != nil {

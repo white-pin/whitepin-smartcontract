@@ -13,8 +13,6 @@ import (
 type EvaluationChaincode struct {
 }
 
-// TODO queryString을 parameter로 받는 것들 가능한 일반 변수로 변경하고 내부에서 query string 조합.
-
 type RecordType int
 const RecordTypeUser RecordType = 1
 const RecordTypeTrade RecordType = 2
@@ -63,6 +61,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 
 
 // 사용자 생성
+// args[0] : 사용자 토큰
 func (t *EvaluationChaincode) addUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -79,6 +78,7 @@ func (t *EvaluationChaincode) addUser(stub shim.ChaincodeStubInterface, args []s
 
 
 // 사용자 조회
+// args[0] : 사용자 토큰
 func (t *EvaluationChaincode) queryUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -95,11 +95,15 @@ func (t *EvaluationChaincode) queryUser(stub shim.ChaincodeStubInterface, args [
 
 
 // 거래 생성
+// args[0] : 거래 ID
+// args[1] : 서비스 코드
+// args[2] : 판매자 토큰
+// args[3] : 구매자 토큰
 func (t *EvaluationChaincode) createTrade(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
 	}
-	// TODO 서비스 코드, 판매자 토큰, 구매자 토큰 존재하는지 검증 로직 필요
+
 	err := CreateTrade(stub, args[0], args[1], args[2], args[3])
 	if err != nil {
 		return shim.Error(err.Error())
@@ -111,6 +115,7 @@ func (t *EvaluationChaincode) createTrade(stub shim.ChaincodeStubInterface, args
 
 
 // 거래 조회
+// args[0] : 거래 ID
 func (t *EvaluationChaincode) queryTradeWithId(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -127,6 +132,8 @@ func (t *EvaluationChaincode) queryTradeWithId(stub shim.ChaincodeStubInterface,
 
 
 // meta 점수 생성
+// args[0] : meta 점수 키
+// args[1] : 거래 ID
 func (t *EvaluationChaincode) addScoreMeta(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments. Expecting 2")
@@ -142,6 +149,7 @@ func (t *EvaluationChaincode) addScoreMeta(stub shim.ChaincodeStubInterface, arg
 
 
 // meta 점수 조회
+// args[0] : meta 점수 키
 func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -162,12 +170,11 @@ func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, a
 
 
 // 거래 조회 query 작성 후 추가
+// args[0] : query string. (거래는 다양하게 불러올 필요가 있으므로 query string 자체를 변수로 받도록)
 func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
-
-	// TODO selector 유효성 검증
 
 	byteData, err := GetTradeWithQueryString(stub, args[0])
 	if err != nil {
@@ -179,6 +186,8 @@ func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInt
 
 
 // 거래 완료 처리. 판매자, 구매자 둘다 완료처리해야 최종 완료됨. args[1]은 userTkn으로, 판매자, 구매자인지 판별하여 해당 대상에 대해서 완료처리.
+// args[0] : 거래 ID
+// args[1] : 사용자 토큰 (판매자든 구매자든)
 func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments. Expecting 2")
@@ -196,7 +205,7 @@ func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args 
 //args[0] := tradeId
 //args[1] := scoreOrigin // "[3,4,5]" 의 format
 //args[2] := division
-//args[3] := key (encryption)
+//args[3] := key (encryption에 사용될)
 func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
@@ -245,6 +254,7 @@ func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, 
 
 
 // meta 점수 조회 (query)
+// args[0] : 거래 ID
 func (t *EvaluationChaincode) queryMetaScoreWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
@@ -264,9 +274,11 @@ func (t *EvaluationChaincode) queryMetaScoreWithCondition(stub shim.ChaincodeStu
 
 
 // 거래 점수 등록
+// args[0] : 거래 ID
+// args[1] : 암호화 해제 키
 func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1")
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
 	byteData, err := GetScoreMetaWithQueryString(stub, args[0])
@@ -287,7 +299,7 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 	tradeId := scoreMeta.TradeId
 
 	// AES_GCM 생성 및 키 설정
-	aes_gcm, err := GCM_Key(args[3])
+	aes_gcm, err := GCM_Key(args[1])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -351,6 +363,16 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 	}
 
 	err = EvaluateTrade(stub, tradeId, sellScore, buyScore)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	// Update User score 구매자, 판매자
+	err = UpdateUserScore(stub, trade.SellerTkn , sellScore, "sell")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = UpdateUserScore(stub, trade.BuyerTkn , buyScore, "buy")
 	if err != nil {
 		return shim.Error(err.Error())
 	}

@@ -46,7 +46,6 @@ func AddUser(stub shim.ChaincodeStubInterface, userTkn string) error {
 		err = errors.Errorf("Failed to get User : UserTkn is \"%s\"", userTkn)
 		return nil
 	}
-
 	if byteData != nil {
 		err := errors.Errorf("User \"%s\" is already exist.", userTkn)
 		return err

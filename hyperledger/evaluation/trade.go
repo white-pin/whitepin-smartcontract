@@ -40,9 +40,26 @@ func CreateTrade(stub shim.ChaincodeStubInterface, tradeId string, serviceCode s
 	trade.BuyerTkn = buyerTkn
 	trade.Date = time.Now()
 
-	// TODO 기존 거래 있는지 검증
+	// 기존 거래 있는지 검증
+	_, err := GetTradeWithId(stub, tradeId)
+	if err == nil {
+		err := errors.Errorf("Cannot create that trade with id : %s", tradeId)
+		return err
+	}
 
-	err := putTrade(stub, trade, tradeId)
+	// userTkn 검증
+	_, err = GetUser(stub, sellerTkn)
+	if err != nil {
+		err := errors.Errorf("Seller does not exist : %s", sellerTkn)
+		return err
+	}
+	_, err = GetUser(stub, buyerTkn)
+	if err != nil {
+		err := errors.Errorf("Buyer does not exist : %s", buyerTkn)
+		return err
+	}
+
+	err = putTrade(stub, trade, tradeId)
 	if err != nil {
 		return err
 	}
