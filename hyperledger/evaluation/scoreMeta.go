@@ -72,7 +72,7 @@ func GetScoreMetaWithKey(stub shim.ChaincodeStubInterface, scoreKey string) ([]b
 // 점수 가져오기 (query)
 func GetScoreMetaWithQueryString(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
 
-	queryString := "{\"selector\":[\"TradeId\":\"" + tradeId + "\",\"RecType\":3]}"
+	queryString := "{\"selector\":{\"TradeId\":\""+tradeId+"\",\"RecType\":3},\"use_index\":[\"_design/indexTradeDoc\",\"indexTrade\"]}"
 
 	resultsIterator, err := stub.GetQueryResult(queryString)
 	if err != nil {
@@ -144,7 +144,7 @@ func SetScoreMetaWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 	var scoreMeta ScoreMeta
 	var byteData []byte
 
-	queryString := "{\"selector\":[\"TradeId\":\"" + tradeId + "\",\"RecType\":3]}"
+	queryString := "{\"selector\":{\"TradeId\":\""+tradeId+"\",\"RecType\":3},\"use_index\":[\"_design/indexTradeDoc\",\"indexTrade\"]}"
 
 	resultsIterators, err := stub.GetQueryResult(queryString)
 	if err != nil {
