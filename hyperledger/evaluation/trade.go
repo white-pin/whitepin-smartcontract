@@ -157,7 +157,7 @@ func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string
 }
 
 
-// 거래 점수 등록 (meta score 로부터 구매자, 판매자 평가점수 동시에 등록)
+// 거래 점수 등록 (Temp score 로부터 구매자, 판매자 평가점수 동시에 등록)
 func EvaluateTrade(stub shim.ChaincodeStubInterface, tradeId string, sellScore []int, buyScore []int) error {
 	var trade Trade
 

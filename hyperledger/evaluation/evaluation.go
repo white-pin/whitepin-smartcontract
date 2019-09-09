@@ -16,7 +16,7 @@ type EvaluationChaincode struct {
 type RecordType int
 const RecordTypeUser RecordType = 1
 const RecordTypeTrade RecordType = 2
-const RecordTypeScoreMeta RecordType = 3
+const RecordTypeScoreTemp RecordType = 3
 
 // ===================================================================================
 // Main
@@ -46,12 +46,12 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryUser": return t.queryUser(stub, args) // 사용자 조회
 	case "createTrade": return t.createTrade(stub, args) // 거래 생성
 	case "queryTradeWithId": return t.queryTradeWithId(stub, args) // 거래 조회
-	case "addScoreMeta": return t.addScoreMeta(stub, args) // 임시 평가점수 저장
-	case "queryScoreMeta": return t.queryScoreMeta(stub, args) // 임시 평가정수 조회
+	case "addScoreTemp": return t.addScoreTemp(stub, args) // 임시 평가점수 저장
+	case "queryScoreTemp": return t.queryScoreTemp(stub, args) // 임시 평가정수 조회
 	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구마재)
-	case "enrollMetaScore": return t.enrollMetaScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구마재)
-	case "queryMetaScoreWithCondition": return t.queryMetaScoreWithCondition(stub, args) // 임시 평가점수 조회 (query string 사용)
+	case "enrollTempScore": return t.enrollTempScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구마재)
+	case "queryTempScoreWithCondition": return t.queryTempScoreWithCondition(stub, args) // 임시 평가점수 조회 (query string 사용)
 	case "enrollScore": return t.enrollScore(stub, args) // 거래 점수 등록 (판매자, 구매자 동시에)
 	default:
 		err := errors.Errorf("No matched function. : %s", function)
@@ -131,15 +131,15 @@ func (t *EvaluationChaincode) queryTradeWithId(stub shim.ChaincodeStubInterface,
 }
 
 
-// meta 점수 생성
-// args[0] : meta 점수 키
+// Temp 점수 생성
+// args[0] : Temp 점수 키
 // args[1] : 거래 ID
-func (t *EvaluationChaincode) addScoreMeta(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *EvaluationChaincode) addScoreTemp(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
-	err := AddScoreMeta(stub, args[0], args[1])
+	err := AddScoreTemp(stub, args[0], args[1])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -148,24 +148,24 @@ func (t *EvaluationChaincode) addScoreMeta(stub shim.ChaincodeStubInterface, arg
 }
 
 
-// meta 점수 조회
-// args[0] : meta 점수 키
-func (t *EvaluationChaincode) queryScoreMeta(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+// Temp 점수 조회
+// args[0] : Temp 점수 키
+func (t *EvaluationChaincode) queryScoreTemp(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	scoreMeta, err := GetScoreMetaWithKey(stub, args[0])
+	scoreTemp, err := GetScoreTempWithKey(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
-	if scoreMeta == nil {
+	if scoreTemp == nil {
 		err = errors.New("There is no matched data.")
 		return shim.Error(err.Error())
 	}
 
-	fmt.Println("Get meta score successfully.")
-	return shim.Success(scoreMeta)
+	fmt.Println("Get Temp score successfully.")
+	return shim.Success(scoreTemp)
 }
 
 
@@ -201,12 +201,12 @@ func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args 
 }
 
 
-// meta 점수 등록(구매자 or 판매자) : 둘다 등록해야 최종 등록됨
+// Temp 점수 등록(구매자 or 판매자) : 둘다 등록해야 최종 등록됨
 //args[0] := tradeId
 //args[1] := scoreOrigin // "[3,4,5]" 의 format
 //args[2] := division
 //args[3] := key (encryption에 사용될)
-func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *EvaluationChaincode) enrollTempScore(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 4 {
 		return shim.Error("Incorrect number of arguments. Expecting 4")
 	}
@@ -244,7 +244,7 @@ func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, 
 
 	score := aes_gcm.chipherTxt
 
-	err = SetScoreMetaWithTradeId(stub, args[0], score, args[2])
+	err = SetScoreTempWithTradeId(stub, args[0], score, args[2])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -253,14 +253,14 @@ func (t *EvaluationChaincode) enrollMetaScore(stub shim.ChaincodeStubInterface, 
 }
 
 
-// meta 점수 조회 (query)
+// Temp 점수 조회 (query)
 // args[0] : 거래 ID
-func (t *EvaluationChaincode) queryMetaScoreWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *EvaluationChaincode) queryTempScoreWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	buffer, err := GetScoreMetaWithQueryString(stub, args[0])
+	buffer, err := GetScoreTempWithQueryString(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -281,7 +281,7 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
-	byteData, err := GetScoreMetaWithQueryString(stub, args[0])
+	byteData, err := GetScoreTempWithQueryString(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -290,13 +290,13 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		return shim.Error(err.Error())
 	}
 
-	var scoreMeta ScoreMeta
-	err = json.Unmarshal(byteData, &scoreMeta)
+	var scoreTemp ScoreTemp
+	err = json.Unmarshal(byteData, &scoreTemp)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	tradeId := scoreMeta.TradeId
+	tradeId := scoreTemp.TradeId
 
 	// AES_GCM 생성 및 키 설정
 	aes_gcm, err := GCM_Key(args[1])
@@ -322,7 +322,7 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		date.Hour(), date.Minute(), date.Second(), date.Nanosecond())
 
 	// 복호화 (sell)
-	aes_gcm.chipherTxt = scoreMeta.Score.SellScore // "[3,4,5]" 의 암호화된 format
+	aes_gcm.chipherTxt = scoreTemp.Score.SellScore // "[3,4,5]" 의 암호화된 format
 	err = aes_gcm.GCM_decrypt()
 	if err != nil {
 		return shim.Error(err.Error())
@@ -330,7 +330,7 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 	sellScorePlainTxt := aes_gcm.plainTxt
 
 	// 복호화 (buy)
-	aes_gcm.chipherTxt = scoreMeta.Score.BuyScore // "[3,4,5]" 의 암호화된 format
+	aes_gcm.chipherTxt = scoreTemp.Score.BuyScore // "[3,4,5]" 의 암호화된 format
 	err = aes_gcm.GCM_decrypt()
 	if err != nil {
 		return shim.Error(err.Error())
