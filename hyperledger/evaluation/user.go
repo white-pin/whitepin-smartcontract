@@ -33,7 +33,7 @@ type User struct {
 		EvalSum01 int `json:"EvalSum01"`
 		EvalSum02 int `json:"EvalSum02"`
 		EvalSum03 int `json:"EvalSum03"`
-	} `json:"BuySum"`
+	} `json:"TradeSum"`
 }
 
 
