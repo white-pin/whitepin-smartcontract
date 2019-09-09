@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/pkg/errors"
+	"time"
 )
 
 // ScoreTemp data는 점수가 실제 거래 데이터에 저장되기 전에 암호화 된 값으로 임시로 저장하고 있는다.
@@ -16,7 +17,7 @@ type ScoreTemp struct {
 	RecType RecordType `json:"RecType"` // ScoreTemp : 3
 	ScoreKey string `json:"ScoreKey"`
 	TradeId string `json:"TradeId"`
-	ExpiryDate string `json:"ExpiryDate"`
+	ExpiryDate time.Time `json:"ExpiryDate"`
 	Score struct {
 		SellScore string `json:"SellScore"`
 		BuyScore string `json:"BuyScore"`

@@ -46,12 +46,12 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryUser": return t.queryUser(stub, args) // 사용자 조회
 	case "createTrade": return t.createTrade(stub, args) // 거래 생성
 	case "queryTradeWithId": return t.queryTradeWithId(stub, args) // 거래 조회
-	case "addScoreTemp": return t.addScoreTemp(stub, args) // 임시 평가점수 저장
+	//case "addScoreTemp": return t.addScoreTemp(stub, args) // 임시 평가점수 저장 -> createTrade 후에 발생하도록 수정. 필요 없어짐.
 	case "queryScoreTemp": return t.queryScoreTemp(stub, args) // 임시 평가정수 조회
 	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
-	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구마재)
-	case "enrollTempScore": return t.enrollTempScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구마재)
-	case "queryTempScoreWithCondition": return t.queryTempScoreWithCondition(stub, args) // 임시 평가점수 조회 (query string 사용)
+	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구매자)
+	case "enrollTempScore": return t.enrollTempScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구매자)
+	case "queryTempScoreWithCondition": return t.queryTempScoreWithCondition(stub, args) // 임시 평가점수 조회 (내부에서 query string 사용, tradeId로만 조회 가능)
 	case "enrollScore": return t.enrollScore(stub, args) // 거래 점수 등록 (판매자, 구매자 동시에)
 	default:
 		err := errors.Errorf("No matched function. : %s", function)

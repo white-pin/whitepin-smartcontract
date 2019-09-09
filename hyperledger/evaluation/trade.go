@@ -64,6 +64,19 @@ func CreateTrade(stub shim.ChaincodeStubInterface, tradeId string, serviceCode s
 		return err
 	}
 
+	// trade와 1:1 매핑되는 임시 평가점수 record 추가. expiry date는 default.
+	// TODO scoreKey 처리하는 부분 추가
+	scoreKey := "KEY01"
+	err = AddScoreTemp(stub, scoreKey, tradeId)
+	if err != nil {
+		// 임시 평가점수를 생성하지 못했기 때문에 거래자체도 생성x (rollback)
+		rollbackErr := stub.DelState(tradeId)
+		if rollbackErr != nil {
+			return rollbackErr
+		}
+		return err
+	}
+
 	return nil
 }
 
