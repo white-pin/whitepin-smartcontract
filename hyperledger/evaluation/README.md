@@ -4,7 +4,7 @@
 
 ### 거래의 평가
 
-거래는 판매자와 구매자 모두 *공통으로 평가*할 수 있는 **상대방의 태도**에 대해서 평가할 수 있도록 `평가 항목`이 구성되어 있다.
+거래는 판매자와 구매자 모두 *공통으로 평가*할 수 있는 **상대방의 태도**에 대해서 평가할 수 있도록 `평가항목`이 구성되어 있다.
 `평가항목`은 **3**개이다.
 
 #### 평가항목
@@ -33,6 +33,10 @@
 판매 또는 구매 어느 한쪽의 거래량이 많은 사용자에 대해서는 총 평균 점수보다 판매시 평균점수, 구매시 평균점수를 구분하는 것이 신뢰도를 가늠하는데 효율적일 수 있기 때문에
 구분하여 제공한다.
 
+사용자가 상대방의 점수를 등록하지 않은 경우, 상대방의 점수는 전부 0점처리되며 집계에 합산하지 않는다. SellEx와 BuyEx는 판매, 구매시 상대방으로부터 평가 받지 않은 거래의 양이다. 
+따라서 구매자의 경우 BuyEx, 판매자의 경우 SellEx가 +1 처리된다. 이를 감안하여 평균을 계산할때 다음과 같은 식으로 계산한다.
+
+
 ###### 예시
 ```
 판매 평균점수 = 판매 평가점수 합 / 평가 유효 판매량
@@ -41,80 +45,20 @@
 구매 평균점수 = 구매 평가점수 합 / 평가 유효 구매량
 구매 평균점수 = 구매 평가점수 합 / (총 구매량 - 평가받지 않은 구매량)
 ```  
- 
+
+> Sell EvalAvg01 = Sellsum.EvalSum01 / (SellAmt - SellEx)  
+> Buy TotAvg = BuySum.TotSum / (BuyAmt - BuyEx)  
+> Trade TotAvg = TradeSum.TotSum / ((SellAmt + BuyAmt) - (SellEx + BuyEx))
+
 ---
 
 ### Data-set
-
-#### Trade
-
-###### 설명
-
-```
-TradeId : 거래에 대한 ID이며 hash값을 문자열로 저장한다. (data-set key)
-ServiceCode : 서비스 코드는 화이트핀 프로젝트의 하위 서비스 제공자들에 대한 코드이다. 거래를 발생시킨 서비스가 어디인지 규명할때 사용한다.  
-SellerTkn : 판매자 토큰. 판매자가 누구인지 확인할 때 사용하는 고유한 ID이며 hash값을 문자열로 저장한다.  
-BuyerTkn : 구매자 토큰. 구매자가 누구인지 확인할 때 사용하는 고유한 ID이며 hash값을 문자열로 저장한다.  
-Date : 거래가 생성된 시점, 즉 구매자가 구매 요청을 한 시각을 의미한다.
-Close : 거래를 확정하는 시점.  
-	SellDone : 판매자가 거래를 확정했는지 여부 (true : 확정, false : 미확정)  
-	BuyDone : 구매자가 거래를 확정했는지 여부 (true : 확정, false : 미확정)
-	SellDate : 판매자가 거래를 확정한 시각.
-	BuyDate : 구매자가 거래를 확정한 시각.  
-Score : 거래에 대한 평가 점수  
-	SellScore : 판매자의 평가 점수. (판매자가 받은 평가 점수, 구매자가 판매자를 평가한 점수)
-	BuyScore : 구매자의 평가 점수. (구매자가 받은 평가 점수, 판매자가 구매자를 평가한 점수)
-```
-
-###### 예시
-```
-{
-    TradeId:"0xA665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3",
-    ServiceCode:"Code11",
-    SellerTkn:"0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4",
-    BuyerTkn:"5994471ABB01112AFCC18159F6CC74B4F511B99806DA59B3CAF5A9C173CACFC5",
-    Date:"20190904143256",
-    Close:{
-        SellDone:"",
-        BuyDone:"",
-        SellDate:"",
-        BuyDate:""
-    },
-    Score:{
-        SellScore:[5, 4, 3],
-        BuyScore:[2, 5, 3]
-    }
-}
-```
-
-#### ScoreMeta
-
-###### 설명
-```
-ScoreKey : 임시 평가점수에 대한 키로 사용되며 무작위 값이다. (data-set key)
-TradeId : 거래에 대한 ID이며 hash값을 문자열로 저장한다. (Trade data-set과 동일)
-Score : 거래에 대한 상호 평가 점수.
-    SellScore : 판매자의 평가 점수. (구매자가 판매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서) 
-    BuyScore : 구매자의 평가 점수. (판매자가 구매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서)
-```
-
-###### 예시
-```
-{
-    ScoreKey:"0x0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4"
-    TradeId:"0xA665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3"
-    Score:{
-        SellScore:"BE736DE7249081C95A41CBAF762A92B95E280DE155CACBFBF480E0059FAF88A6",
-        BuyScore:"C78BBE24FCC51F8900F2D50FF4894A2136C6FBCF2CE321FD0D94C78E5F234C68"
-    }
-}
-```
-
 
 #### User
 
 ###### 설명
 ```
+RecType : 데이터 셋의 성격을 구분하는 ID (User는 1)
 UserTkn : 사용자 토큰. 사용자가 누구인지 확인할 때 사용하는 고유한 ID이며 hash값을 문자열로 저장한다. (data-set key)
 SellAmt : 판매한 거래의 양.
 BuyAmt : 구매한 거래의 양.
@@ -141,6 +85,7 @@ TradeSum : 전체 거래 평가점수의 합
 ###### 예시
 ```
 {
+    RecType:1
     UserTkn:"0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4",
     SellAmt:15230,
     BuyAmt:24,
@@ -167,6 +112,85 @@ TradeSum : 전체 거래 평가점수의 합
 }
 ```
 
+#### Trade
+
+###### 설명
+
+```
+RecType : 데이터 셋의 성격을 구분하는 ID (Trade는 2)
+TradeId : 거래에 대한 ID이며 hash값을 문자열로 저장한다. (data-set key)
+ServiceCode : 서비스 코드는 화이트핀 프로젝트의 하위 서비스 제공자들에 대한 코드이다. 거래를 발생시킨 서비스가 어디인지 규명할때 사용한다.  
+SellerTkn : 판매자 토큰. 판매자가 누구인지 확인할 때 사용하는 고유한 ID이며 hash값을 문자열로 저장한다.  
+BuyerTkn : 구매자 토큰. 구매자가 누구인지 확인할 때 사용하는 고유한 ID이며 hash값을 문자열로 저장한다.  
+Date : 거래가 생성된 시점, 즉 구매자가 구매 요청을 한 시각을 의미한다.
+Close : 거래를 확정하는 시점.  
+	SellDone : 판매자가 거래를 확정했는지 여부 (true : 확정, false : 미확정)  
+	BuyDone : 구매자가 거래를 확정했는지 여부 (true : 확정, false : 미확정)
+	SellDate : 판매자가 거래를 확정한 시각.
+	BuyDate : 구매자가 거래를 확정한 시각.  
+Score : 거래에 대한 평가 점수  
+	SellScore : 판매자의 평가 점수. (판매자가 받은 평가 점수, 구매자가 판매자를 평가한 점수)
+	BuyScore : 구매자의 평가 점수. (구매자가 받은 평가 점수, 판매자가 구매자를 평가한 점수)
+```
+
+###### 예시
+```
+{
+    RecType:2
+    TradeId:"0xA665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3",
+    ServiceCode:"Code11",
+    SellerTkn:"0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4",
+    BuyerTkn:"5994471ABB01112AFCC18159F6CC74B4F511B99806DA59B3CAF5A9C173CACFC5",
+    Date:"20190904143256",
+    Close:{
+        SellDone:"",
+        BuyDone:"",
+        SellDate:"",
+        BuyDate:""
+    },
+    Score:{
+        SellScore:[5, 4, 3],
+        BuyScore:[2, 5, 3]
+    }
+}
+```
+
+#### ScoreMeta
+
+###### 설명
+```
+RecType : 데이터 셋의 성격을 구분하는 ID (ScoreMeta는 3)
+ScoreKey : 임시 평가점수에 대한 키로 사용되며 무작위 값이다. (data-set key)
+TradeId : 거래에 대한 ID이며 hash값을 문자열로 저장한다. (Trade data-set과 동일)
+Score : 거래에 대한 상호 평가 점수.
+    SellScore : 판매자의 평가 점수. (구매자가 판매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서) 
+    BuyScore : 구매자의 평가 점수. (판매자가 구매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서)
+```
+
+###### 예시
+```
+{
+    RecType:3
+    ScoreKey:"0x0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4"
+    TradeId:"0xA665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3"
+    Score:{
+        SellScore:"BE736DE7249081C95A41CBAF762A92B95E280DE155CACBFBF480E0059FAF88A6",
+        BuyScore:"C78BBE24FCC51F8900F2D50FF4894A2136C6FBCF2CE321FD0D94C78E5F234C68"
+    }
+}
+```
+
+---
+
+### Data 저장
+
+`TradeId`는 무작위로 32자리 해시를 생성하여 저장한다. 해시임을 표현하기 위하여 `0x` 를 붙여 저장한다.  
+임시 평가점수는 **AES256 GCM**모드로 암호화하여 저장한다.
+암호화시 필요한 키는 길이에 상관없는 문자열로 받으며, 해당 문자열을 **SHA256**으로 해시하여 32자리의 AES256용 키를 생성한다.  
+GCM 모드에서 사용되는 `Nonce` 값은 24자리의 문자열로 받으며, go에서 사용하는 time.Time()의 시간포맷을 이용하여 yyyymmdd**A**HHMMSSNNNNNNNNN 의 24자리로 생성한다.
+중간의 **A** 는 24자리를 맞춰주기 위해 넣어준 고정값이다. 
+ 
+---
 
 ### Test 방법
 
