@@ -29,12 +29,19 @@ func main() {
 }
 
 // Init initializes chaincode
-// Properties 설정 (default로)
+// Properties 설정 (default)
 func (t *EvaluationChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	fmt.Printf("Init Evaluation Chaincode.")
-	err := InitProperties(stub)
+
+	// properties 설정
+	err := SetProperties(stub, default_evaluationLimit, default_openScoreDuration)
 	if err != nil {
 		return shim.Error(err.Error())
+	}
+
+	// total data 설정
+	if err := AddUser(stub, total_user); err != nil {
+		shim.Error(err.Error())
 	}
 
 	return shim.Success(nil)
@@ -82,9 +89,8 @@ func (t *EvaluationChaincode) getProperties(stub shim.ChaincodeStubInterface) pb
 }
 
 // 프로퍼티 설정
-// args[0] : duration time (초 단위, 1시간 3600, 1일 86400)
-// args[1] : 평가 입력 기다려주는 시간 (default 14일, 1,209,600 = 14 * 24 * 60 * 60) 이시간 이후에는 0점 처리
-// args[2] : 거래 당사자들의 모든 평가 입력 후 공개하기 까지 걸리는 시간 (default 5일, 432,000 = 5 * 24 * 60 * 60)
+// args[0] : 평가 입력 기다려주는 시간 (default 14일, 1,209,600 = 14 * 24 * 60 * 60) 이시간 이후에는 0점 처리
+// args[1] : 거래 당사자들의 모든 평가 입력 후 공개하기 까지 걸리는 시간 (default 5일, 432,000 = 5 * 24 * 60 * 60)
 func (t *EvaluationChaincode) setProperties(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	err := SetProperties(stub, args[0], args[1])
 	if err != nil {

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"strings"
 	"time"
 )
 
@@ -12,27 +13,10 @@ type Properties struct {
 }
 
 const propertyKey string = "PROPERTIES"
-const default_evaluationLimit time.Duration = 1209600 // 14일, 초단위
-const default_openScoreDuration time.Duration = 432000 // 5일, 초단위
-
-func InitProperties(stub shim.ChaincodeStubInterface) error {
-	var prpty Properties
-
-	prpty.EvaluationLimit = default_evaluationLimit
-	prpty.OpenScoreDuration = default_openScoreDuration
-
-	inputData, err := json.Marshal(prpty)
-	if err != nil {
-		return err
-	}
-
-	err = stub.PutState(propertyKey, inputData)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
+const default_evaluationLimit string = "120s" // 2분, 초단위 (시연)
+const default_openScoreDuration string = "30s" // 10초, 초단위 (시연)
+//const default_evaluationLimit string = "1209600" // 14일, 초단위 (실제)
+//const default_openScoreDuration string = "432000" // 5일, 초단위 (실제)
 
 func GetProperties (stub shim.ChaincodeStubInterface) (Properties, error) {
 	var prpty Properties
@@ -54,6 +38,13 @@ func SetProperties(stub shim.ChaincodeStubInterface, evaluationLimit string, ope
 	prpty, err := GetProperties(stub)
 	if err != nil {
 		return err
+	}
+
+	if !strings.Contains(evaluationLimit,"s") {
+		evaluationLimit += "s"
+	}
+	if !strings.Contains(openScoreDuration,"s") {
+		openScoreDuration += "s"
 	}
 
 	if evaluationLimit != "" {

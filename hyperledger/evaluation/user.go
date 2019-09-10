@@ -36,7 +36,7 @@ type User struct {
 	} `json:"TradeSum"`
 }
 
-// UserTkn = "TOTAL_USER" 인 record는 전체 사용자의 총 계를 나타낸다.
+// UserTkn = "TOTAL_USER" 인 Record는 전체 사용자의 총 계를 나타낸다.
 const total_user string = "TOTAL_USER"
 
 
@@ -49,9 +49,11 @@ func AddUser(stub shim.ChaincodeStubInterface, userTkn string) error {
 		err = errors.Errorf("Failed to get User : UserTkn is \"%s\"", userTkn)
 		return nil
 	}
-	if byteData != nil {
+	if byteData != nil && userTkn != total_user {
 		err := errors.Errorf("User \"%s\" is already exist.", userTkn)
 		return err
+	} else if byteData != nil && userTkn == total_user {
+		return nil
 	}
 
 	user.RecType = RecordTypeUser
