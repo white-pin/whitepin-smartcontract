@@ -137,6 +137,7 @@ func GetTradeWithQueryString(stub shim.ChaincodeStubInterface, queryString strin
 // 거래 완료하기 (구매자, 판매자 각각) {TradeId, UserTkn}
 func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string) error {
 	var trade Trade
+	TradeDoneFlag := false // ScoreTemp review 기간 설정
 	bytesData, err := getTrade(stub, tradeId)
 	if err != nil {
 		return err
@@ -152,10 +153,18 @@ func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string
 	}
 
 	switch userTkn {
-	case trade.SellerTkn: trade.Close.SellDone = true
-	trade.Close.SellDate = time.Now()
-	case trade.BuyerTkn: trade.Close.BuyDone = true
-	trade.Close.BuyDate = time.Now()
+	case trade.SellerTkn:
+		trade.Close.SellDone = true
+		trade.Close.SellDate = time.Now()
+		if trade.Close.BuyDone == true {
+			TradeDoneFlag = true
+		}
+	case trade.BuyerTkn:
+		trade.Close.BuyDone = true
+		trade.Close.BuyDate = time.Now()
+		if trade.Close.SellDone == true {
+			TradeDoneFlag = true
+		}
 	default:
 		err := errors.Errorf("user %s is not both seller and buyer.", userTkn)
 		return err
@@ -164,6 +173,19 @@ func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string
 	err = putTrade(stub, trade, tradeId)
 	if err != nil {
 		return err
+	}
+
+	// 거래 당사자 모두 close 했기 때문에 평가 기간의 limit를 지정.
+	if TradeDoneFlag {
+		prpty, err := GetProperties(stub)
+		if err != nil {
+			return err
+		}
+
+		err = SetScoreTempExpiryWithTradeId(stub, tradeId, prpty.EvaluationLimit)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -192,6 +214,11 @@ func EvaluateTrade(stub shim.ChaincodeStubInterface, tradeId string, sellScore [
 	trade.Score.BuyScore = buyScore
 
 	err = putTrade(stub, trade, tradeId)
+	if err != nil {
+		return err
+	}
+
+	err = DelScoreTemp(stub, tradeId)
 	if err != nil {
 		return err
 	}

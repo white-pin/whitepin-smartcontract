@@ -36,6 +36,9 @@ type User struct {
 	} `json:"TradeSum"`
 }
 
+// UserTkn = "TOTAL_USER" 인 record는 전체 사용자의 총 계를 나타낸다.
+const total_user string = "TOTAL_USER"
+
 
 // 사용자 추가
 func AddUser(stub shim.ChaincodeStubInterface, userTkn string) error {
