@@ -72,36 +72,36 @@ func GetScoreTempWithKey(stub shim.ChaincodeStubInterface, scoreKey string) ([]b
 
 
 // 점수 가져오기 (query)
-func GetScoreTempWithQueryString(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
-
-	byteData, err := getScoreTempWithTradeId(stub, tradeId)
-	if err != nil {
-		return nil, err
-	}
-	//queryString := "{\"selector\":{\"TradeId\":\""+tradeId+"\",\"RecType\":3},\"use_index\":[\"_design/indexTradeDoc\",\"indexTrade\"]}"
-	//
-	//resultsIterator, err := stub.GetQueryResult(queryString)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//buffer := bytes.Buffer{}
-	//
-	//if resultsIterator.HasNext() {
-	//	queryResponse, err := resultsIterator.Next()
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	buffer.WriteString(string(queryResponse.Value))
-	//}
-	//if resultsIterator.HasNext() {
-	//	err := errors.New("Temp score must matched only 1 record.")
-	//	return nil, err
-	//}
-	//defer resultsIterator.Close()
-
-	return byteData, nil
-}
+//func GetScoreTempWithQueryString(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
+//
+//	byteData, err := GetScoreTempWithTradeId(stub, tradeId)
+//	if err != nil {
+//		return nil, err
+//	}
+//	//queryString := "{\"selector\":{\"TradeId\":\""+tradeId+"\",\"RecType\":3},\"use_index\":[\"_design/indexTradeDoc\",\"indexTrade\"]}"
+//	//
+//	//resultsIterator, err := stub.GetQueryResult(queryString)
+//	//if err != nil {
+//	//	return nil, err
+//	//}
+//	//
+//	//buffer := bytes.Buffer{}
+//	//
+//	//if resultsIterator.HasNext() {
+//	//	queryResponse, err := resultsIterator.Next()
+//	//	if err != nil {
+//	//		return nil, err
+//	//	}
+//	//	buffer.WriteString(string(queryResponse.Value))
+//	//}
+//	//if resultsIterator.HasNext() {
+//	//	err := errors.New("Temp score must matched only 1 record.")
+//	//	return nil, err
+//	//}
+//	//defer resultsIterator.Close()
+//
+//	return byteData, nil
+//}
 
 
 // 점수 설정. (key) division : "sell", "buy". sell인 경우는 판매자의 점수이고(구매자가 매긴 점수), buy인 경우는 구매자의 점수이다.(판매자가 매긴 점수)
@@ -151,7 +151,7 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 	var scoreTemp ScoreTemp
 	bothSetScoreFlag := false
 
-	byteData, err := getScoreTempWithTradeId(stub, tradeId)
+	byteData, err := GetScoreTempWithTradeId(stub, tradeId)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func DelScoreTemp(stub shim.ChaincodeStubInterface, tradeId string) error {
 	var scoreTemp ScoreTemp
 	//var byteData []byte
 
-	byteData, err := getScoreTempWithTradeId(stub, tradeId)
+	byteData, err := GetScoreTempWithTradeId(stub, tradeId)
 	if err != nil {
 		return err
 	}
@@ -276,7 +276,7 @@ func DelScoreTemp(stub shim.ChaincodeStubInterface, tradeId string) error {
 
 func SetScoreTempExpiryWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, duration time.Duration) error {
 	var scoreTemp ScoreTemp
-	byteData, err := getScoreTempWithTradeId(stub, tradeId)
+	byteData, err := GetScoreTempWithTradeId(stub, tradeId)
 	if err != nil {
 		return err
 	}
@@ -307,7 +307,7 @@ func SetScoreTempExpiryWithTradeId(stub shim.ChaincodeStubInterface, tradeId str
 // Internal function
 // =================================
 // TODO 검증되면 주석부분 삭제
-func getScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
+func GetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
 	var byteData []byte
 
 	queryString := "{\"selector\":{\"TradeId\":\""+tradeId+"\",\"RecType\":3},\"use_index\":[\"_design/indexTradeDoc\",\"indexTrade\"]}"

@@ -65,7 +65,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구매자)
 	case "enrollTempScore": return t.enrollTempScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구매자)
-	case "queryTempScoreWithCondition": return t.queryTempScoreWithCondition(stub, args) // 임시 평가점수 조회 (내부에서 query string 사용, tradeId로만 조회 가능)
+	case "queryTempScoreWithTradeId": return t.queryTempScoreWithTradeId(stub, args) // 임시 평가점수 조회 (내부에서 query string 사용, tradeId로만 조회 가능)
 	case "enrollScore": return t.enrollScore(stub, args) // 거래 점수 등록 (판매자, 구매자 동시에)
 	default:
 		err := errors.Errorf("No matched function. : %s", function)
@@ -243,8 +243,8 @@ func (t *EvaluationChaincode) closeTrade(stub shim.ChaincodeStubInterface, args 
 
 // Temp 점수 등록(구매자 or 판매자) : 둘다 등록해야 최종 등록됨
 //args[0] := tradeId
-//args[1] := scoreOrigin // "[3,4,5]" 의 format
-//args[2] := division
+//args[1] := userTkn
+//args[2] := scoreOrigin // "[3,4,5]" 의 format
 //args[3] := key (encryption에 사용될)
 func (t *EvaluationChaincode) enrollTempScore(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 4 {
@@ -274,7 +274,14 @@ func (t *EvaluationChaincode) enrollTempScore(stub shim.ChaincodeStubInterface, 
 		date.Year(), date.Month(), date.Day(),
 		date.Hour(), date.Minute(), date.Second(), date.Nanosecond())
 
-	aes_gcm.plainTxt = args[1] // "[3,4,5]" 의 format
+	aes_gcm.plainTxt = args[2] // "[3,4,5]" 의 format
+
+	// 판매자인지 구매자인지 판별
+	var division string
+	switch args[1] {
+	case trade.SellerTkn: division = "buy" // 사용자의 토큰이 판매자 토큰과 일치한다는 것은, 점수를 매기는 주체 = 판매자, 점수가 매겨지는 대상 = 구매자. 즉 구매자가 받는 점수
+	case trade.BuyerTkn: division = "sell" // 사용자의 토큰이 구매자 토큰과 일치한다는 것은, 점수를 매기는 주체 = 구매자, 점수가 매겨지는 대상 = 판매자. 즉 판매자가 받는 점수
+	}
 
 	// 점수 암호화
 	err = aes_gcm.GCM_encrypt()
@@ -284,7 +291,7 @@ func (t *EvaluationChaincode) enrollTempScore(stub shim.ChaincodeStubInterface, 
 
 	score := aes_gcm.chipherTxt
 
-	err = SetScoreTempWithTradeId(stub, args[0], score, args[2])
+	err = SetScoreTempWithTradeId(stub, args[0], score, division)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -295,12 +302,13 @@ func (t *EvaluationChaincode) enrollTempScore(stub shim.ChaincodeStubInterface, 
 
 // Temp 점수 조회 (query)
 // args[0] : 거래 ID
-func (t *EvaluationChaincode) queryTempScoreWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *EvaluationChaincode) queryTempScoreWithTradeId(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	buffer, err := GetScoreTempWithQueryString(stub, args[0])
+	buffer, err := GetScoreTempWithTradeId(stub, args[0])
+	//buffer, err := GetScoreTempWithQueryString(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -321,7 +329,8 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		return shim.Error("Incorrect number of arguments. Expecting 2")
 	}
 
-	byteData, err := GetScoreTempWithQueryString(stub, args[0])
+	byteData, err := GetScoreTempWithTradeId(stub, args[0])
+	//byteData, err := GetScoreTempWithQueryString(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
