@@ -171,23 +171,6 @@ func (t *EvaluationChaincode) queryTradeWithId(stub shim.ChaincodeStubInterface,
 }
 
 
-// Temp 점수 생성 (deprecated. create trade 이후에 실행됨)
-// args[0] : Temp 점수 키
-// args[1] : 거래 ID
-//func (t *EvaluationChaincode) addScoreTemp(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-//	if len(args) != 2 {
-//		return shim.Error("Incorrect number of arguments. Expecting 2")
-//	}
-//
-//	err := AddScoreTemp(stub, args[0], args[1])
-//	if err != nil {
-//		return shim.Error(err.Error())
-//	}
-//
-//	return shim.Success(nil)
-//}
-
-
 // Temp 점수 조회
 // args[0] : Temp 점수 키
 func (t *EvaluationChaincode) queryScoreTemp(stub shim.ChaincodeStubInterface, args []string) pb.Response {
