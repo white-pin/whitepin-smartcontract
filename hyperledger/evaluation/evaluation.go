@@ -34,15 +34,15 @@ func (t *EvaluationChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response
 	fmt.Printf("Init Evaluation Chaincode.")
 
 	// properties 설정
-	err := SetProperties(stub, default_evaluationLimit, default_openScoreDuration)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
+	//err := SetProperties(stub, default_evaluationLimit, default_openScoreDuration)
+	//if err != nil {
+	//	return shim.Error(err.Error())
+	//}
 
 	// total data 설정
-	//if err := AddUser(stub, total_user); err != nil {
-	//	shim.Error(err.Error())
-	//}
+	if err := AddUser(stub, total_user); err != nil {
+		shim.Error(err.Error())
+	}
 
 	return shim.Success(nil)
 }
