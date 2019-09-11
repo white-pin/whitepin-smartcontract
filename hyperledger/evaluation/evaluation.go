@@ -34,7 +34,8 @@ func (t *EvaluationChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response
 	fmt.Printf("Init Evaluation Chaincode.")
 
 	// properties 설정
-	err := SetProperties(stub, default_evaluationLimit, default_openScoreDuration)
+	//err := InitProperties(stub, defaultEvaluationLimit, defaultOpenScoreDuration)
+	err := SetProperties(stub, defaultEvaluationLimit, defaultOpenScoreDuration)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
