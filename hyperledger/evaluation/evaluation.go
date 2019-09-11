@@ -40,9 +40,9 @@ func (t *EvaluationChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response
 	}
 
 	// total data 설정
-	if err := AddUser(stub, total_user); err != nil {
-		shim.Error(err.Error())
-	}
+	//if err := AddUser(stub, total_user); err != nil {
+	//	shim.Error(err.Error())
+	//}
 
 	return shim.Success(nil)
 }
