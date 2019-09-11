@@ -61,7 +61,6 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryUser": return t.queryUser(stub, args) // 사용자 조회
 	case "createTrade": return t.createTrade(stub, args) // 거래 생성
 	case "queryTradeWithId": return t.queryTradeWithId(stub, args) // 거래 조회
-	//case "addScoreTemp": return t.addScoreTemp(stub, args) // 임시 평가점수 저장 -> createTrade 후에 발생하도록 수정. 필요 없어짐.
 	case "queryScoreTemp": return t.queryScoreTemp(stub, args) // 임시 평가정수 조회
 	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구매자)

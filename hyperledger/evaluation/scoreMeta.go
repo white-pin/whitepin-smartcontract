@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/pkg/errors"
+	"log"
 	"time"
 )
 
@@ -71,81 +72,6 @@ func GetScoreTempWithKey(stub shim.ChaincodeStubInterface, scoreKey string) ([]b
 }
 
 
-// 점수 가져오기 (query)
-//func GetScoreTempWithQueryString(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
-//
-//	byteData, err := GetScoreTempWithTradeId(stub, tradeId)
-//	if err != nil {
-//		return nil, err
-//	}
-//	//queryString := "{\"selector\":{\"TradeId\":\""+tradeId+"\",\"RecType\":3},\"use_index\":[\"_design/indexTradeDoc\",\"indexTrade\"]}"
-//	//
-//	//resultsIterator, err := stub.GetQueryResult(queryString)
-//	//if err != nil {
-//	//	return nil, err
-//	//}
-//	//
-//	//buffer := bytes.Buffer{}
-//	//
-//	//if resultsIterator.HasNext() {
-//	//	queryResponse, err := resultsIterator.Next()
-//	//	if err != nil {
-//	//		return nil, err
-//	//	}
-//	//	buffer.WriteString(string(queryResponse.Value))
-//	//}
-//	//if resultsIterator.HasNext() {
-//	//	err := errors.New("Temp score must matched only 1 record.")
-//	//	return nil, err
-//	//}
-//	//defer resultsIterator.Close()
-//
-//	return byteData, nil
-//}
-
-
-// 점수 설정. (key) division : "sell", "buy". sell인 경우는 판매자의 점수이고(구매자가 매긴 점수), buy인 경우는 구매자의 점수이다.(판매자가 매긴 점수)
-// deprecated (key로 저장하지 말고 tradeID로 접근)
-//func SetScoreTempWithKey(stub shim.ChaincodeStubInterface, scoreKey string, score string, division string) error {
-//	var scoreTemp ScoreTemp
-//
-//	byteData, err := stub.GetState(scoreKey)
-//	if err != nil {
-//		err = errors.Errorf("Failed to get Trade : ScoreKey is \"%s\"", scoreKey)
-//		return err
-//	}
-//
-//	err = json.Unmarshal(byteData, &scoreTemp)
-//	if err != nil {
-//		err = errors.New("Failed to json decoding.")
-//		return err
-//	}
-//
-//	switch division {
-//	case "sell": scoreTemp.Score.SellScore = score
-//	case "buy": scoreTemp.Score.BuyScore = score
-//	default:
-//		err := errors.New("Division is wrong. Available value is \"sell\" and \"buy\"")
-//		return err
-//	}
-//
-//	inputData, err := json.Marshal(scoreTemp)
-//	if err != nil {
-//		err := errors.New("Failed to json encoding.")
-//		return err
-//	}
-//
-//	err = stub.PutState(scoreKey, inputData)
-//	if err != nil {
-//		err := errors.New("Failed to store data.")
-//		return err
-//	}
-//	fmt.Printf("Set \"%s\" score successfuly.", division)
-//
-//	return nil
-//}
-
-
 // 점수 설정 (query) division : "sell", "buy". sell인 경우는 판매자의 점수이고(구매자가 매긴 점수), buy인 경우는 구매자의 점수이다.(판매자가 매긴 점수)
 func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, score string, division string) error {
 	var scoreTemp ScoreTemp
@@ -155,27 +81,6 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 	if err != nil {
 		return err
 	}
-	//var byteData []byte
-	//
-	//queryString := "{\"selector\":{\"TradeId\":\""+tradeId+"\",\"RecType\":3},\"use_index\":[\"_design/indexTradeDoc\",\"indexTrade\"]}"
-	//
-	//resultsIterators, err := stub.GetQueryResult(queryString)
-	//if err != nil {
-	//	err = errors.Errorf("Failed to get Trade : query string is wrong : \"%s\"", queryString)
-	//	return err
-	//}
-	//
-	//if resultsIterators.HasNext() {
-	//	response, err := resultsIterators.Next()
-	//	if err != nil {
-	//		return err
-	//	}
-	//	byteData = response.Value
-	//}
-	//if resultsIterators.HasNext() {
-	//	err := errors.New("Temp score must matched only 1 record.")
-	//	return err
-	//}
 
 	err = json.Unmarshal(byteData, &scoreTemp)
 	if err != nil {
@@ -183,6 +88,9 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		return err
 	}
 
+	log.Printf("before SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
+	log.Printf("before SCORE_TEMP buy: %s\n", scoreTemp.Score.BuyScore)
+	log.Printf("before SCORE_TEMP sell: %s\n", scoreTemp.Score.SellScore)
 	scoreKey := scoreTemp.ScoreKey
 
 	switch division {
@@ -200,6 +108,10 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		err := errors.New("Division is wrong. Available value is \"sell\" and \"buy\"")
 		return err
 	}
+
+	log.Printf("after SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
+	log.Printf("after SCORE_TEMP buy: %s\n", scoreTemp.Score.BuyScore)
+	log.Printf("after SCORE_TEMP sell: %s\n", scoreTemp.Score.SellScore)
 
 	inputData, err := json.Marshal(scoreTemp)
 	if err != nil {
@@ -235,31 +147,11 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 // 임시 평가점수 삭제
 func DelScoreTemp(stub shim.ChaincodeStubInterface, tradeId string) error {
 	var scoreTemp ScoreTemp
-	//var byteData []byte
 
 	byteData, err := GetScoreTempWithTradeId(stub, tradeId)
 	if err != nil {
 		return err
 	}
-	//queryString := "{\"selector\":{\"TradeId\":\""+tradeId+"\",\"RecType\":3},\"use_index\":[\"_design/indexTradeDoc\",\"indexTrade\"]}"
-	//
-	//resultsIterators, err := stub.GetQueryResult(queryString)
-	//if err != nil {
-	//	err = errors.Errorf("Failed to get Trade : query string is wrong : \"%s\"", queryString)
-	//	return err
-	//}
-	//
-	//if resultsIterators.HasNext() {
-	//	response, err := resultsIterators.Next()
-	//	if err != nil {
-	//		return err
-	//	}
-	//	byteData = response.Value
-	//}
-	//if resultsIterators.HasNext() {
-	//	err := errors.New("Temp score must matched only 1 record.")
-	//	return err
-	//}
 
 	err = json.Unmarshal(byteData, &scoreTemp)
 	if err != nil {
@@ -308,7 +200,6 @@ func SetScoreTempExpiryWithTradeId(stub shim.ChaincodeStubInterface, tradeId str
 // =================================
 // Internal function
 // =================================
-// TODO 검증되면 주석부분 삭제
 func GetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
 	var byteData []byte
 
