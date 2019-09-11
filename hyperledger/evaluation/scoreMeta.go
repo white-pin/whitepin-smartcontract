@@ -183,6 +183,8 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		return err
 	}
 
+	scoreKey := scoreTemp.ScoreKey
+
 	switch division {
 	case "sell":
 		scoreTemp.Score.SellScore = score
@@ -205,7 +207,7 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		return err
 	}
 
-	err = stub.PutState(scoreTemp.ScoreKey, inputData)
+	err = stub.PutState(scoreKey, inputData)
 	if err != nil {
 		err := errors.New("Failed to store data.")
 		return err
