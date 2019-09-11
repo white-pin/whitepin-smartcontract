@@ -186,12 +186,12 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 	switch division {
 	case "sell":
 		scoreTemp.Score.SellScore = score
-		if scoreTemp.Score.BuyScore == "" {
+		if scoreTemp.Score.BuyScore != "" {
 			bothSetScoreFlag = true
 		}
 	case "buy":
 		scoreTemp.Score.BuyScore = score
-		if scoreTemp.Score.SellScore == "" {
+		if scoreTemp.Score.SellScore != "" {
 			bothSetScoreFlag = true
 		}
 	default:

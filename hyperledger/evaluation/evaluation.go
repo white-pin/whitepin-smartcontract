@@ -282,6 +282,8 @@ func (t *EvaluationChaincode) enrollTempScore(stub shim.ChaincodeStubInterface, 
 	switch args[1] {
 	case trade.SellerTkn: division = "buy" // 사용자의 토큰이 판매자 토큰과 일치한다는 것은, 점수를 매기는 주체 = 판매자, 점수가 매겨지는 대상 = 구매자. 즉 구매자가 받는 점수
 	case trade.BuyerTkn: division = "sell" // 사용자의 토큰이 구매자 토큰과 일치한다는 것은, 점수를 매기는 주체 = 구매자, 점수가 매겨지는 대상 = 판매자. 즉 판매자가 받는 점수
+	default:
+		return shim.Error(errors.Errorf("User \"%s\" doesn't participated this trade.", args[1]).Error())
 	}
 
 	// 점수 암호화

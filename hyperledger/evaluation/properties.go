@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"log"
 	"strings"
 	"time"
 )
@@ -16,47 +15,6 @@ type Properties struct {
 const propertyKey string = "PROPERTIES"
 const defaultEvaluationLimit string = "120s" // 2분, 초단위 (시연)
 const defaultOpenScoreDuration string = "30s" // 10초, 초단위 (시연)
-
-func InitProperties (stub shim.ChaincodeStubInterface, evaluationLimit string, openScoreDuration string) error {
-	var prpty Properties
-	if !strings.Contains(evaluationLimit,"s") {
-		evaluationLimit += "s"
-	}
-	if !strings.Contains(openScoreDuration,"s") {
-		openScoreDuration += "s"
-	}
-
-	if evaluationLimit != "" {
-		log.Println("evaluationLimit time duration parsing ...")
-		evaluationLimitNew, err := time.ParseDuration(evaluationLimit)
-		if err != nil {
-			return err
-		}
-		prpty.EvaluationLimit = evaluationLimitNew
-		log.Println("evaluationLimit time duration parsing finished")
-	}
-	if openScoreDuration != "" {
-		log.Println("openScoreDuration time duration parsing ...")
-		openScoreDurationNew, err := time.ParseDuration(openScoreDuration)
-		if err != nil {
-			return err
-		}
-		prpty.OpenScoreDuration = openScoreDurationNew
-		log.Println("openScoreDuration time duration parsing finished")
-	}
-
-	inputData, err := json.Marshal(prpty)
-	if err != nil {
-		return err
-	}
-
-	err = stub.PutState(propertyKey, inputData)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func GetProperties (stub shim.ChaincodeStubInterface) (Properties, error) {
 	var prpty Properties
@@ -83,36 +41,26 @@ func SetProperties(stub shim.ChaincodeStubInterface, evaluationLimit string, ope
 		return err
 	}
 
-	log.Println("string parsing ...")
-	log.Printf("before evaluationLimit : %s\n", evaluationLimit)
-	log.Printf("before openScoreDuration : %s\n", openScoreDuration)
-	log.Println("")
 	if !strings.Contains(evaluationLimit,"s") {
 		evaluationLimit += "s"
 	}
 	if !strings.Contains(openScoreDuration,"s") {
 		openScoreDuration += "s"
 	}
-	log.Printf("after evaluationLimit : %s\n", evaluationLimit)
-	log.Printf("after openScoreDuration : %s\n", openScoreDuration)
 
 	if evaluationLimit != "" {
-		log.Println("evaluationLimit time duration parsing ...")
 		evaluationLimitNew, err := time.ParseDuration(evaluationLimit)
 		if err != nil {
 			return err
 		}
 		prpty.EvaluationLimit = evaluationLimitNew
-		log.Println("evaluationLimit time duration parsing finished")
 	}
 	if openScoreDuration != "" {
-		log.Println("openScoreDuration time duration parsing ...")
 		openScoreDurationNew, err := time.ParseDuration(openScoreDuration)
 		if err != nil {
 			return err
 		}
 		prpty.OpenScoreDuration = openScoreDurationNew
-		log.Println("openScoreDuration time duration parsing finished")
 	}
 
 	inputData, err := json.Marshal(prpty)
