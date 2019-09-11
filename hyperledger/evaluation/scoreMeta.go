@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -119,6 +120,10 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		err := errors.New("Failed to json encoding.")
 		return err
 	}
+
+	log.Printf("input data(string) : %s", inputData)
+	log.Printf("input data(string, encoding) : %s", hex.EncodeToString(inputData))
+	log.Printf("input data(hash) : %X", inputData)
 
 	err = stub.PutState(scoreKey, inputData)
 	if err != nil {
