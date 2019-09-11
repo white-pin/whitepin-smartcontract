@@ -88,6 +88,7 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		return err
 	}
 
+	log.Printf("division : %s\n", division)
 	log.Printf("before SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
 	log.Printf("before SCORE_TEMP buy: %s\n", scoreTemp.Score.BuyScore)
 	log.Printf("before SCORE_TEMP sell: %s\n", scoreTemp.Score.SellScore)
