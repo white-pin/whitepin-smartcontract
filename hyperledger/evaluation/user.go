@@ -112,6 +112,11 @@ func UpdateUserScore(stub shim.ChaincodeStubInterface, userTkn string, score []i
 			user.TradeSum.TotSum += item
 		}
 
+		// 점수가 등록되지 않아서 0 점처리 된 경우
+		if score[0] == 0 && score[1] == 0 && score[2] == 0{
+			user.SellEx++
+		}
+
 	case "buy":
 		user.BuyAmt++
 		user.BuySum.EvalSum01 += score[0]
@@ -124,6 +129,11 @@ func UpdateUserScore(stub shim.ChaincodeStubInterface, userTkn string, score []i
 		for _, item := range score {
 			user.BuySum.TotSum += item
 			user.TradeSum.TotSum += item
+		}
+
+		// 점수가 등록되지 않아서 0 점처리 된 경우
+		if score[0] == 0 && score[1] == 0 && score[2] == 0{
+			user.BuyEx++
 		}
 	default:
 		err := errors.New("Division is wrong. Available value is \"sell\" and \"buy\"")
@@ -177,6 +187,10 @@ func UpdateTotalScore(stub shim.ChaincodeStubInterface, sellScore []int, buyScor
 		tot.SellSum.TotSum += item
 		tot.TradeSum.TotSum += item
 	}
+	// 점수가 등록되지 않아서 0 점처리 된 경우
+	if sellScore[0] == 0 && sellScore[1] == 0 && sellScore[2] == 0{
+		tot.SellEx++
+	}
 
 	tot.BuyAmt++
 	tot.BuySum.EvalSum01 += buyScore[0]
@@ -189,6 +203,10 @@ func UpdateTotalScore(stub shim.ChaincodeStubInterface, sellScore []int, buyScor
 	for _, item := range buyScore {
 		tot.BuySum.TotSum += item
 		tot.TradeSum.TotSum += item
+	}
+	// 점수가 등록되지 않아서 0 점처리 된 경우
+	if buyScore[0] == 0 && buyScore[1] == 0 && buyScore[2] == 0{
+		tot.BuyEx++
 	}
 
 	inputData, err := json.Marshal(tot)
