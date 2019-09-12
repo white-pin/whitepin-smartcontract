@@ -21,7 +21,7 @@ type ScoreTemp struct {
 	Score struct {
 		SellScore string `json:"SellScore"`
 		BuyScore string `json:"BuyScore"`
-	}
+	}`json:"Score"`
 }
 
 

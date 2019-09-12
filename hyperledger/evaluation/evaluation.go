@@ -63,10 +63,9 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryTradeWithId": return t.queryTradeWithId(stub, args) // 거래 조회
 	case "queryScoreTemp": return t.queryScoreTemp(stub, args) // 임시 평가정수 조회
 	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
-	case "queryScoreTempWithTradeId": return t.queryScoreTempWithTradeId(stub, args) // 임시 평가정수 조회 (query string 사용)
+	case "queryScoreTempWithTradeId": return t.queryScoreTempWithTradeId(stub, args) // 임시 평가정수 조회 (query string 사용, tradeId로만 조회 가능)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구매자)
 	case "enrollTempScore": return t.enrollTempScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구매자)
-	case "queryTempScoreWithTradeId": return t.queryTempScoreWithTradeId(stub, args) // 임시 평가점수 조회 (내부에서 query string 사용, tradeId로만 조회 가능)
 	case "enrollScore": return t.enrollScore(stub, args) // 거래 점수 등록 (판매자, 구매자 동시에)
 	default:
 		err := errors.Errorf("No matched function. : %s", function)
@@ -220,6 +219,10 @@ func (t *EvaluationChaincode) queryScoreTempWithTradeId(stub shim.ChaincodeStubI
 	if err != nil {
 		return shim.Error(err.Error())
 	}
+	if byteData == nil {
+		err = errors.New("There is no matched data.")
+		return shim.Error(err.Error())
+	}
 
 	return shim.Success(byteData)
 }
@@ -299,27 +302,6 @@ func (t *EvaluationChaincode) enrollTempScore(stub shim.ChaincodeStubInterface, 
 	}
 
 	return shim.Success(nil)
-}
-
-
-// Temp 점수 조회 (query)
-// args[0] : 거래 ID
-func (t *EvaluationChaincode) queryTempScoreWithTradeId(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1")
-	}
-
-	buffer, err := GetScoreTempWithTradeId(stub, args[0])
-	//buffer, err := GetScoreTempWithQueryString(stub, args[0])
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-	if buffer == nil {
-		err = errors.New("There is no matched data.")
-		return shim.Error(err.Error())
-	}
-
-	return shim.Success(buffer)
 }
 
 
