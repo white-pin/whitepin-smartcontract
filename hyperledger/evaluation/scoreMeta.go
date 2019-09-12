@@ -18,8 +18,7 @@ type ScoreTemp struct {
 	ScoreKey string `json:"ScoreKey"`
 	TradeId string `json:"TradeId"`
 	ExpiryDate time.Time `json:"ExpiryDate"`
-	SellScore string `json:"sell_score"`
-	BuyScore string `json:"buy_score"`
+	EncScore []string `json:"EncScore"` // ["SellSCore", "BuyScore"] : EncScore[0] = SellScore, EncScore[1] = BuyScore
 	//Score struct {
 	//	SellScore string `json:"SellScore"`
 	//	BuyScore string `json:"BuyScore"`
@@ -34,6 +33,7 @@ func AddScoreTemp(stub shim.ChaincodeStubInterface, scoreKey string, tradeId str
 	scoreTemp.RecType = RecordTypeScoreTemp
 	scoreTemp.ScoreKey = scoreKey
 	scoreTemp.TradeId = tradeId
+	scoreTemp.EncScore = make([]string, 2)
 
 	// 같은 scoreKey로 이미 임시 점수를 생성했는지 확인
 	_, err := GetScoreTempWithKey(stub, scoreKey)
@@ -96,19 +96,19 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 
 	log.Printf("division : %s\n", division)
 	log.Printf("before SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
-	log.Printf("before SCORE_TEMP buy: %s\n", scoreTemp.BuyScore)
-	log.Printf("before SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
+	log.Printf("before SCORE_TEMP buy: %s\n", scoreTemp.EncScore)
+	//log.Printf("before SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
 	scoreKey := scoreTemp.ScoreKey
 
 	switch division {
 	case "sell":
-		scoreTemp.SellScore = score
-		if scoreTemp.BuyScore != "" {
+		scoreTemp.EncScore[0] = score
+		if scoreTemp.EncScore[1] != "" {
 			bothSetScoreFlag = true
 		}
 	case "buy":
-		scoreTemp.BuyScore = score
-		if scoreTemp.SellScore != "" {
+		scoreTemp.EncScore[1] = score
+		if scoreTemp.EncScore[0] != "" {
 			bothSetScoreFlag = true
 		}
 	default:
@@ -117,8 +117,8 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 	}
 
 	log.Printf("after SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
-	log.Printf("after SCORE_TEMP buy: %s\n", scoreTemp.BuyScore)
-	log.Printf("after SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
+	log.Printf("after SCORE_TEMP buy: %s\n", scoreTemp.EncScore)
+	//log.Printf("after SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
 
 	inputData, err := json.Marshal(scoreTemp)
 	if err != nil {
