@@ -402,12 +402,16 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		return shim.Error(err.Error())
 	}
 
-	// Update User score 구매자, 판매자
+	// Update User score 구매자, 판매자, 전체
 	err = UpdateUserScore(stub, trade.SellerTkn , sellScore, "sell")
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 	err = UpdateUserScore(stub, trade.BuyerTkn , buyScore, "buy")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = UpdateTotalScore(stub, sellScore, buyScore)
 	if err != nil {
 		return shim.Error(err.Error())
 	}

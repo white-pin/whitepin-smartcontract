@@ -37,7 +37,7 @@ type User struct {
 }
 
 // UserTkn = "TOTAL_USER" 인 Record는 전체 사용자의 총 계를 나타낸다.
-const total_user string = "TOTAL_USER"
+const TotalUser string = "TOTAL_USER"
 
 
 // 사용자 추가
@@ -49,10 +49,10 @@ func AddUser(stub shim.ChaincodeStubInterface, userTkn string) error {
 		err = errors.Errorf("Failed to get User : UserTkn is \"%s\"", userTkn)
 		return nil
 	}
-	if byteData != nil && userTkn != total_user {
+	if byteData != nil && userTkn != TotalUser {
 		err := errors.Errorf("User \"%s\" is already exist.", userTkn)
 		return err
-	} else if byteData != nil && userTkn == total_user {
+	} else if byteData != nil && userTkn == TotalUser {
 		return nil
 	}
 
@@ -98,7 +98,8 @@ func UpdateUserScore(stub shim.ChaincodeStubInterface, userTkn string, score []i
 
 	// 점수 합산
 	switch division {
-	case "sell": user.SellAmt++
+	case "sell":
+		user.SellAmt++
 		user.SellSum.EvalSum01 += score[0]
 		user.SellSum.EvalSum02 += score[1]
 		user.SellSum.EvalSum03 += score[2]
@@ -111,7 +112,8 @@ func UpdateUserScore(stub shim.ChaincodeStubInterface, userTkn string, score []i
 			user.TradeSum.TotSum += item
 		}
 
-	case "buy": user.BuyAmt++
+	case "buy":
+		user.BuyAmt++
 		user.BuySum.EvalSum01 += score[0]
 		user.BuySum.EvalSum02 += score[1]
 		user.BuySum.EvalSum03 += score[2]
@@ -135,6 +137,67 @@ func UpdateUserScore(stub shim.ChaincodeStubInterface, userTkn string, score []i
 	}
 
 	err = stub.PutState(userTkn, inputData)
+	if err != nil {
+		err := errors.New("Failed to store data.")
+		return err
+	}
+
+	return nil
+}
+
+
+func UpdateTotalScore(stub shim.ChaincodeStubInterface, sellScore []int, buyScore []int) error {
+	var tot User
+
+	byteData, err := stub.GetState(TotalUser)
+	if err != nil {
+		err = errors.New("Failed to get Total")
+		return nil
+	}
+	if byteData == nil {
+		err := errors.New("There is no Total")
+		return err
+	}
+
+	err = json.Unmarshal(byteData, &tot)
+	if err != nil {
+		err := errors.New("Failed to json decoding.")
+		return err
+	}
+
+	tot.SellAmt++
+	tot.SellSum.EvalSum01 += sellScore[0]
+	tot.SellSum.EvalSum02 += sellScore[1]
+	tot.SellSum.EvalSum03 += sellScore[2]
+
+	tot.TradeSum.EvalSum01 += sellScore[0]
+	tot.TradeSum.EvalSum02 += sellScore[1]
+	tot.TradeSum.EvalSum03 += sellScore[2]
+	for _, item := range sellScore {
+		tot.SellSum.TotSum += item
+		tot.TradeSum.TotSum += item
+	}
+
+	tot.BuyAmt++
+	tot.BuySum.EvalSum01 += buyScore[0]
+	tot.BuySum.EvalSum02 += buyScore[1]
+	tot.BuySum.EvalSum03 += buyScore[2]
+
+	tot.TradeSum.EvalSum01 += buyScore[0]
+	tot.TradeSum.EvalSum02 += buyScore[1]
+	tot.TradeSum.EvalSum03 += buyScore[2]
+	for _, item := range buyScore {
+		tot.BuySum.TotSum += item
+		tot.TradeSum.TotSum += item
+	}
+
+	inputData, err := json.Marshal(tot)
+	if err != nil {
+		err = errors.New("Failed to json encoding.")
+		return err
+	}
+
+	err = stub.PutState(TotalUser, inputData)
 	if err != nil {
 		err := errors.New("Failed to store data.")
 		return err
