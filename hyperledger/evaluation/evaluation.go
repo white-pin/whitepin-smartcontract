@@ -48,7 +48,7 @@ func (t *EvaluationChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response
 	return shim.Success(nil)
 }
 
-
+// TODO data put, get 공통화
 func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response  {
 	function, args := stub.GetFunctionAndParameters()
 	fmt.Println("invoke is running " + function)
@@ -354,11 +354,8 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		date.Year(), date.Month(), date.Day(),
 		date.Hour(), date.Minute(), date.Second(), date.Nanosecond())
 
-	// 암호화된 평가점수 추출
-	score := strings.Split(scoreTemp.EncScore, ",")
-
 	// 복호화 (sell)
-	aes_gcm.chipherTxt = score[0] // "[3,4,5]" 의 암호화된 format
+	aes_gcm.chipherTxt = scoreTemp.Score.SellScore // "[3,4,5]" 의 암호화된 format
 	err = aes_gcm.GCM_decrypt()
 	if err != nil {
 		return shim.Error(err.Error())
@@ -366,7 +363,7 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 	sellScorePlainTxt := aes_gcm.plainTxt
 
 	// 복호화 (buy)
-	aes_gcm.chipherTxt = score[1] // "[3,4,5]" 의 암호화된 format
+	aes_gcm.chipherTxt = scoreTemp.Score.BuyScore // "[3,4,5]" 의 암호화된 format
 	err = aes_gcm.GCM_decrypt()
 	if err != nil {
 		return shim.Error(err.Error())

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/pkg/errors"
-	"log"
-	"strings"
 	"time"
 )
 
@@ -18,12 +16,12 @@ type ScoreTemp struct {
 	RecType RecordType `json:"RecType"` // ScoreTemp : 3
 	ScoreKey string `json:"ScoreKey"`
 	TradeId string `json:"TradeId"`
+	UserTkn string `json:"UserTkn"`
 	ExpiryDate time.Time `json:"ExpiryDate"`
-	EncScore string `json:"EncScore"` // "SellScore,BuyScore"의 string 데이터가 암호화 된 정보. 두 정보는 "," 로 구분됨
-	//Score struct {
-	//	SellScore string `json:"SellScore"`
-	//	BuyScore string `json:"BuyScore"`
-	//} `json:"Score"`
+	Score struct {
+		SellScore string `json:"SellScore"`
+		BuyScore string `json:"BuyScore"`
+	} `json:"Score"`
 }
 
 
@@ -93,39 +91,29 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		return errors.New("Failed to json decoding.")
 	}
 
-	// 점수가 이미 모두 등록된 경우
-	if strings.Contains(scoreTemp.EncScore, ",") {
-		return errors.New("Cannot modify score.")
-	}
-
-	log.Printf("division : %s\n", division)
-	log.Printf("before SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
-	log.Printf("before SCORE_TEMP buy: %s\n", scoreTemp.EncScore)
+	//log.Printf("division : %s\n", division)
+	//log.Printf("before SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
+	//log.Printf("before SCORE_TEMP buy: %s\n", scoreTemp.EncScore)
 	//log.Printf("before SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
-	scoreKey := scoreTemp.ScoreKey
 
 	switch division {
 	case "sell":
-		if scoreTemp.EncScore != "" { // buyer 점수가 먼저 등록된 경우
-			scoreTemp.EncScore = score + "," + scoreTemp.EncScore
+		scoreTemp.Score.SellScore = score
+		if scoreTemp.Score.BuyScore != "" {
 			bothSetScoreFlag = true
-		} else {
-			scoreTemp.EncScore = score
 		}
 	case "buy":
-		if scoreTemp.EncScore != "" { // seller 점수가 먼저 등록된 경우
-			scoreTemp.EncScore = scoreTemp.EncScore + "," + score
+		scoreTemp.Score.BuyScore = score
+		if scoreTemp.Score.SellScore != "" {
 			bothSetScoreFlag = true
-		} else {
-			scoreTemp.EncScore = score
 		}
 	default:
 		err := errors.New("Division is wrong. Available value is \"sell\" and \"buy\"")
 		return err
 	}
 
-	log.Printf("after SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
-	log.Printf("after SCORE_TEMP buy: %s\n", scoreTemp.EncScore)
+	//log.Printf("after SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
+	//log.Printf("after SCORE_TEMP buy: %s\n", scoreTemp.EncScore)
 	//log.Printf("after SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
 
 	inputData, err := json.Marshal(scoreTemp)
@@ -134,15 +122,7 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		return err
 	}
 
-	log.Printf("input data(string) : %s", inputData)
-
-	err = stub.PutState(scoreKey, inputData)
-	if err != nil {
-		err := errors.New("Failed to store data.")
-		return err
-	}
-	fmt.Printf("Set \"%s\" score successfuly.", division)
-
+	//log.Printf("input data(string) : %s", inputData)
 
 	// 거래 당사자 모두 리뷰를 등록한 경우 공개일이 지나면 공개하도록 만료일을 변경한다.
 	if bothSetScoreFlag {
@@ -151,11 +131,20 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 			return err
 		}
 
-		err = SetScoreTempExpiryWithTradeId(stub, tradeId, prpty.OpenScoreDuration)
-		if err != nil {
-			return err
-		}
+		scoreTemp.ExpiryDate = time.Now().Add(prpty.OpenScoreDuration) // 지금으로부터 + 평가기간 limit
+
+		//err = SetScoreTempExpiryWithTradeId(stub, tradeId, prpty.OpenScoreDuration)
+		//if err != nil {
+		//	return err
+		//}
 	}
+
+	err = stub.PutState(scoreTemp.ScoreKey, inputData)
+	if err != nil {
+		err := errors.New("Failed to store data.")
+		return err
+	}
+	fmt.Printf("Set \"%s\" score successfuly.", division)
 
 	return nil
 }
