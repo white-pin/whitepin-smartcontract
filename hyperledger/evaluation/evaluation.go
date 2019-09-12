@@ -18,6 +18,9 @@ const RecordTypeUser RecordType = 1
 const RecordTypeTrade RecordType = 2
 const RecordTypeScoreTemp RecordType = 3
 
+// TODO data put, get 공통화
+// TODO Error 발생 공통화
+// TODO 체인코드 로그 구문 추가
 // ===================================================================================
 // Main
 // ===================================================================================
@@ -34,7 +37,6 @@ func (t *EvaluationChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response
 	fmt.Printf("Init Evaluation Chaincode.")
 
 	// properties 설정
-	//err := InitProperties(stub, defaultEvaluationLimit, defaultOpenScoreDuration)
 	err := SetProperties(stub, defaultEvaluationLimit, defaultOpenScoreDuration)
 	if err != nil {
 		return shim.Error(err.Error())
@@ -48,7 +50,7 @@ func (t *EvaluationChaincode) Init(stub shim.ChaincodeStubInterface) pb.Response
 	return shim.Success(nil)
 }
 
-// TODO data put, get 공통화
+
 func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response  {
 	function, args := stub.GetFunctionAndParameters()
 	fmt.Println("invoke is running " + function)

@@ -10,7 +10,7 @@ import (
 
 // ScoreTemp data는 점수가 실제 거래 데이터에 저장되기 전에 암호화 된 값으로 임시로 저장하고 있는다.
 // 조건이 달성되면 점수를 실제 거래 데이터에 저장하고 공개한다.
-// 조건 : 판매자와 구매자 모두 구매완료한 날로부터 14일 후.
+// 조건 : 판매자와 구매자 모두 구매완료한 날로부터 14일후.
 // 조건 : 판매자와 구매자가 서로 평가를 완료한 일로부터 5일후
 type ScoreTemp struct {
 	RecType RecordType `json:"RecType"` // ScoreTemp : 3
@@ -91,11 +91,6 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		return errors.New("Failed to json decoding.")
 	}
 
-	//log.Printf("division : %s\n", division)
-	//log.Printf("before SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
-	//log.Printf("before SCORE_TEMP buy: %s\n", scoreTemp.EncScore)
-	//log.Printf("before SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
-
 	switch division {
 	case "sell":
 		scoreTemp.Score.SellScore = score
@@ -112,18 +107,6 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		return err
 	}
 
-	//log.Printf("after SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
-	//log.Printf("after SCORE_TEMP buy: %s\n", scoreTemp.EncScore)
-	//log.Printf("after SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
-
-	inputData, err := json.Marshal(scoreTemp)
-	if err != nil {
-		err := errors.New("Failed to json encoding.")
-		return err
-	}
-
-	//log.Printf("input data(string) : %s", inputData)
-
 	// 거래 당사자 모두 리뷰를 등록한 경우 공개일이 지나면 공개하도록 만료일을 변경한다.
 	if bothSetScoreFlag {
 		prpty, err := GetProperties(stub)
@@ -132,11 +115,12 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 		}
 
 		scoreTemp.ExpiryDate = time.Now().Add(prpty.OpenScoreDuration) // 지금으로부터 + 평가기간 limit
+	}
 
-		//err = SetScoreTempExpiryWithTradeId(stub, tradeId, prpty.OpenScoreDuration)
-		//if err != nil {
-		//	return err
-		//}
+	inputData, err := json.Marshal(scoreTemp)
+	if err != nil {
+		err := errors.New("Failed to json encoding.")
+		return err
 	}
 
 	err = stub.PutState(scoreTemp.ScoreKey, inputData)
