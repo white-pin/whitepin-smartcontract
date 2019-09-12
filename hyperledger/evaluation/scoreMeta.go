@@ -6,6 +6,7 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/pkg/errors"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type ScoreTemp struct {
 	ScoreKey string `json:"ScoreKey"`
 	TradeId string `json:"TradeId"`
 	ExpiryDate time.Time `json:"ExpiryDate"`
-	EncScore []string `json:"EncScore"` // ["SellSCore", "BuyScore"] : EncScore[0] = SellScore, EncScore[1] = BuyScore
+	EncScore string `json:"EncScore"` // "SellScore,BuyScore"의 string 데이터가 암호화 된 정보. 두 정보는 "," 로 구분됨
 	//Score struct {
 	//	SellScore string `json:"SellScore"`
 	//	BuyScore string `json:"BuyScore"`
@@ -33,7 +34,6 @@ func AddScoreTemp(stub shim.ChaincodeStubInterface, scoreKey string, tradeId str
 	scoreTemp.RecType = RecordTypeScoreTemp
 	scoreTemp.ScoreKey = scoreKey
 	scoreTemp.TradeId = tradeId
-	scoreTemp.EncScore = make([]string, 2)
 
 	// 같은 scoreKey로 이미 임시 점수를 생성했는지 확인
 	_, err := GetScoreTempWithKey(stub, scoreKey)
@@ -90,8 +90,12 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 
 	err = json.Unmarshal(byteData, &scoreTemp)
 	if err != nil {
-		err = errors.New("Failed to json decoding.")
-		return err
+		return errors.New("Failed to json decoding.")
+	}
+
+	// 점수가 이미 모두 등록된 경우
+	if strings.Contains(scoreTemp.EncScore, ",") {
+		return errors.New("Cannot modify score.")
 	}
 
 	log.Printf("division : %s\n", division)
@@ -102,14 +106,18 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 
 	switch division {
 	case "sell":
-		scoreTemp.EncScore[0] = score
-		if scoreTemp.EncScore[1] != "" {
+		if scoreTemp.EncScore != "" { // buyer 점수가 먼저 등록된 경우
+			scoreTemp.EncScore = score + "," + scoreTemp.EncScore
 			bothSetScoreFlag = true
+		} else {
+			scoreTemp.EncScore = score
 		}
 	case "buy":
-		scoreTemp.EncScore[1] = score
-		if scoreTemp.EncScore[0] != "" {
+		if scoreTemp.EncScore != "" { // seller 점수가 먼저 등록된 경우
+			scoreTemp.EncScore = scoreTemp.EncScore + "," + score
 			bothSetScoreFlag = true
+		} else {
+			scoreTemp.EncScore = score
 		}
 	default:
 		err := errors.New("Division is wrong. Available value is \"sell\" and \"buy\"")

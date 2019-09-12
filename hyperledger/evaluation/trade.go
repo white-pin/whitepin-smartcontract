@@ -21,7 +21,7 @@ type Trade struct {
 		BuyDone bool `json:"BuyDone"`
 		SellDate time.Time `json:"SellDate"`
 		BuyDate time.Time `json:"BuyDate"`
-	}`json:"Close"`
+	} `json:"Close"`
 	Score struct {
 		SellScore []int `json:"SellScore"`
 		BuyScore []int `json:"BuyScore"`
