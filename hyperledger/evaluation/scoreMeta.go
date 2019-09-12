@@ -81,6 +81,10 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 	if err != nil {
 		return err
 	}
+	if byteData == nil {
+		err := errors.New("There is no matched data.")
+		return err
+	}
 
 	err = json.Unmarshal(byteData, &scoreTemp)
 	if err != nil {
@@ -199,10 +203,6 @@ func SetScoreTempExpiryWithTradeId(stub shim.ChaincodeStubInterface, tradeId str
 }
 
 
-
-// =================================
-// Internal function
-// =================================
 func GetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
 	var byteData []byte
 

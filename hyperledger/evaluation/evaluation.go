@@ -63,6 +63,7 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryTradeWithId": return t.queryTradeWithId(stub, args) // 거래 조회
 	case "queryScoreTemp": return t.queryScoreTemp(stub, args) // 임시 평가정수 조회
 	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
+	case "queryScoreTempWithTradeId": return t.queryScoreTempWithTradeId(stub, args) // 임시 평가정수 조회 (query string 사용)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구매자)
 	case "enrollTempScore": return t.enrollTempScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구매자)
 	case "queryTempScoreWithTradeId": return t.queryTempScoreWithTradeId(stub, args) // 임시 평가점수 조회 (내부에서 query string 사용, tradeId로만 조회 가능)
@@ -200,6 +201,22 @@ func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInt
 	}
 
 	byteData, err := GetTradeWithQueryString(stub, args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(byteData)
+}
+
+
+// 임시평가점수 조회 query 작성 후 추가
+// args[0] : query string. (거래는 다양하게 불러올 필요가 있으므로 query string 자체를 변수로 받도록)
+func (t *EvaluationChaincode) queryScoreTempWithTradeId(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	byteData, err := GetScoreTempWithTradeId(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
