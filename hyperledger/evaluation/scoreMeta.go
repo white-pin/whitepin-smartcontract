@@ -18,10 +18,12 @@ type ScoreTemp struct {
 	ScoreKey string `json:"ScoreKey"`
 	TradeId string `json:"TradeId"`
 	ExpiryDate time.Time `json:"ExpiryDate"`
-	Score struct {
-		SellScore string `json:"SellScore"`
-		BuyScore string `json:"BuyScore"`
-	}`json:"Score"`
+	SellScore string `json:"SellScore"`
+	BuyScore string `json:"BuyScore"`
+	//Score struct {
+	//	SellScore string `json:"SellScore"`
+	//	BuyScore string `json:"BuyScore"`
+	//} `json:"Score"`
 }
 
 
@@ -94,19 +96,19 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 
 	log.Printf("division : %s\n", division)
 	log.Printf("before SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
-	log.Printf("before SCORE_TEMP buy: %s\n", scoreTemp.Score.BuyScore)
-	log.Printf("before SCORE_TEMP sell: %s\n", scoreTemp.Score.SellScore)
+	log.Printf("before SCORE_TEMP buy: %s\n", scoreTemp.BuyScore)
+	log.Printf("before SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
 	scoreKey := scoreTemp.ScoreKey
 
 	switch division {
 	case "sell":
-		scoreTemp.Score.SellScore = score
-		if scoreTemp.Score.BuyScore != "" {
+		scoreTemp.SellScore = score
+		if scoreTemp.BuyScore != "" {
 			bothSetScoreFlag = true
 		}
 	case "buy":
-		scoreTemp.Score.BuyScore = score
-		if scoreTemp.Score.SellScore != "" {
+		scoreTemp.BuyScore = score
+		if scoreTemp.SellScore != "" {
 			bothSetScoreFlag = true
 		}
 	default:
@@ -115,8 +117,8 @@ func SetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string, s
 	}
 
 	log.Printf("after SCORE_TEMP key: %s\n", scoreTemp.ScoreKey)
-	log.Printf("after SCORE_TEMP buy: %s\n", scoreTemp.Score.BuyScore)
-	log.Printf("after SCORE_TEMP sell: %s\n", scoreTemp.Score.SellScore)
+	log.Printf("after SCORE_TEMP buy: %s\n", scoreTemp.BuyScore)
+	log.Printf("after SCORE_TEMP sell: %s\n", scoreTemp.SellScore)
 
 	inputData, err := json.Marshal(scoreTemp)
 	if err != nil {

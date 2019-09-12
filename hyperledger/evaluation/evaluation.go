@@ -355,7 +355,7 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		date.Hour(), date.Minute(), date.Second(), date.Nanosecond())
 
 	// 복호화 (sell)
-	aes_gcm.chipherTxt = scoreTemp.Score.SellScore // "[3,4,5]" 의 암호화된 format
+	aes_gcm.chipherTxt = scoreTemp.SellScore // "[3,4,5]" 의 암호화된 format
 	err = aes_gcm.GCM_decrypt()
 	if err != nil {
 		return shim.Error(err.Error())
@@ -363,7 +363,7 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 	sellScorePlainTxt := aes_gcm.plainTxt
 
 	// 복호화 (buy)
-	aes_gcm.chipherTxt = scoreTemp.Score.BuyScore // "[3,4,5]" 의 암호화된 format
+	aes_gcm.chipherTxt = scoreTemp.BuyScore // "[3,4,5]" 의 암호화된 format
 	err = aes_gcm.GCM_decrypt()
 	if err != nil {
 		return shim.Error(err.Error())
