@@ -18,8 +18,8 @@ type ScoreTemp struct {
 	ScoreKey string `json:"ScoreKey"`
 	TradeId string `json:"TradeId"`
 	ExpiryDate time.Time `json:"ExpiryDate"`
-	SellScore string `json:"SellScore"`
-	BuyScore string `json:"BuyScore"`
+	SellScore string `json:"sell_score"`
+	BuyScore string `json:"buy_score"`
 	//Score struct {
 	//	SellScore string `json:"SellScore"`
 	//	BuyScore string `json:"BuyScore"`
