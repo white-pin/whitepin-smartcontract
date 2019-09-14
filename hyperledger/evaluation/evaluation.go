@@ -224,29 +224,52 @@ func (t *EvaluationChaincode) queryTradeWithQueryString(stub shim.ChaincodeStubI
 // args[0] : 사용자 정보, UserTkn
 // args[1] : 사용자의 조건 (판매 : "sell", 구매 : "buy", 둘다 : "all")
 // args[2] : 시간에 대한 ordering. (default is desc.)
+// args[3] : 일반조회, 페이지 조회(normal, page, default is normal)
+// args[4] (optional) : 한 페이지 사이즈
+// args[5] (optional) : 페이지 번호
+// args[6] (optional) : 북마크 (첫 페이지 조회 또는 default는 "")
 func (t *EvaluationChaincode) queryTradeWithUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 3 {
-		return shim.Error("Incorrect number of arguments. Expecting 3")
+	if len(args) != 4 && len(args) != 7 {
+		return shim.Error("Incorrect number of arguments. Expecting 4 or 7")
 	}
+	var byteData []byte
+	var err error
+	userTkn := args[0]
+	condition := args[1]
 	ordering := defaultOrder
 	if args[2] != "" {
 		ordering = args[2]
 	}
+	reportType := args[3]
+	pageSize := args[4]
+	pageNum := args[5]
+	bookmark := args[6]
 	queryString := ""
-	switch args[1] {
+
+	switch condition {
 	case "sell" :
-		queryString = "{\"selector\":{\"SellerTkn\":\""+args[0]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+		queryString = "{\"selector\":{\"SellerTkn\":\""+userTkn+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
 	case "buy" :
-		queryString = "{\"selector\":{\"BuyerTkn\":\""+args[0]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+		queryString = "{\"selector\":{\"BuyerTkn\":\""+userTkn+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
 	case "all" :
-		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+args[0]+"\",\"RecType\":2},{\"BuyerTkn\":\""+args[0]+"\",\"RecType\":2}]},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+userTkn+"\",\"RecType\":2},{\"BuyerTkn\":\""+userTkn+"\",\"RecType\":2}]},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
 	default :
 		return shim.Error(errors.New("Unexpected user condition. It can be 'sell', 'buy' and 'all'").Error())
 	}
 
-	byteData, err := getQueryString(stub, queryString)
-	if err != nil {
-		return shim.Error(err.Error())
+	switch reportType {
+	case "normal" :
+		byteData, err = getQueryString(stub, queryString)
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+	case "page" :
+		byteData, err = getPageDataWithQueryString(stub, queryString, pageSize, pageNum, bookmark)
+		if err != nil {
+			return shim.Error(errors.New("Paging Query Failed").Error())
+		}
+	default:
+		return shim.Error(errors.New("Unexpected reoport option. 'normal' and 'page' is available.").Error())
 	}
 
 	return shim.Success(byteData)
@@ -256,28 +279,53 @@ func (t *EvaluationChaincode) queryTradeWithUser(stub shim.ChaincodeStubInterfac
 // args[1] : 서비스 코드, ServiceCode
 // args[2] : 사용자의 조건 (판매 : "sell", 구매 : "buy", 둘다 : "all")
 // args[3] : 시간에 대한 ordering. (default is desc.)
+// args[4] : 일반조회, 페이지 조회(normal, page, default is normal)
+// args[5] (optional) : 한 페이지 사이즈
+// args[6] (optional) : 페이지 번호
+// args[7] (optional) : 북마크 (첫 페이지 조회 또는 default는 "")
 func (t *EvaluationChaincode) queryTradeUserService(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 4 {
-		return shim.Error("Incorrect number of arguments. Expecting 4")
+	if len(args) != 5 && len(args) != 8 {
+		return shim.Error("Incorrect number of arguments. Expecting 5 or 8")
 	}
+	var byteData []byte
+	var err error
+	userTkn := args[0]
+	serviceCode := args[1]
+	condition := args[2]
 	ordering := defaultOrder
 	if args[3] != "" {
 		ordering = args[3]
 	}
+	reportType := args[4]
+	pageSize := args[5]
+	pageNum := args[6]
+	bookmark := args[7]
+
 	queryString := ""
-	switch args[2] {
+	switch condition {
 	case "sell" :
-		queryString = "{\"selector\":{\"SellerTkn\":\""+args[0]+"\",\"ServiceCode\":\""+args[1]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+		queryString = "{\"selector\":{\"SellerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
 	case "buy" :
-		queryString = "{\"selector\":{\"BuyerTkn\":\""+args[0]+"\",\"ServiceCode\":\""+args[1]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+		queryString = "{\"selector\":{\"BuyerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
 	case "all" :
-		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+args[0]+"\",\"ServiceCode\":\""+args[1]+"\",\"RecType\":2},{\"BuyerTkn\":\""+args[0]+"\",\"ServiceCode\":\""+args[1]+"\",\"RecType\":2}]},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2},{\"BuyerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2}]},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
 	default :
 		return shim.Error(errors.New("Unexpected user condition. It can be 'sell', 'buy' and 'all'").Error())
 	}
-	byteData, err := getQueryString(stub, queryString)
-	if err != nil {
-		return shim.Error(err.Error())
+
+	switch reportType {
+	case "normal" :
+		byteData, err = getQueryString(stub, queryString)
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+	case "page" :
+		byteData, err = getPageDataWithQueryString(stub, queryString, pageSize, pageNum, bookmark)
+		if err != nil {
+			return shim.Error(errors.New("Paging Query Failed").Error())
+		}
+	default:
+		return shim.Error(errors.New("Unexpected reoport option. 'normal' and 'page' is available.").Error())
 	}
 
 	return shim.Success(byteData)
@@ -285,24 +333,44 @@ func (t *EvaluationChaincode) queryTradeUserService(stub shim.ChaincodeStubInter
 // 거래 조회 (서비스 코드로 조회)
 // args[0] : 서비스 코드, ServiceCode
 // args[1] : 시간에 대한 ordering. (default is desc.)
+// args[2] : 일반조회, 페이지 조회(normal, page, default is normal)
+// args[3] (optional) : 한 페이지 사이즈
+// args[4] (optional) : 페이지 번호
+// args[5] (optional) : 북마크 (첫 페이지 조회 또는 default는 "")
 func (t *EvaluationChaincode) queryTradeService(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 3 {
-		return shim.Error("Incorrect number of arguments. Expecting 3")
+	if len(args) != 3 && len(args) != 6 {
+		return shim.Error("Incorrect number of arguments. Expecting 3 or 6")
 	}
+	var byteData []byte
+	var err error
+	serviceCode := args[0]
 	ordering := defaultOrder
 	if args[1] != "" {
 		ordering = args[1]
 	}
-	queryString := "{\"selector\":{\"ServiceCode\":\""+args[0]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+	reportType := args[2]
+	pageSize := args[3]
+	pageNum := args[4]
+	bookmark := args[5]
+	queryString := "{\"selector\":{\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
 
-	byteData, err := getQueryString(stub, queryString)
-	if err != nil {
-		return shim.Error(err.Error())
+	switch reportType {
+	case "normal" :
+		byteData, err = getQueryString(stub, queryString)
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+	case "page" :
+		byteData, err = getPageDataWithQueryString(stub, queryString, pageSize, pageNum, bookmark)
+		if err != nil {
+			return shim.Error(errors.New("Paging Query Failed").Error())
+		}
+	default:
+		return shim.Error(errors.New("Unexpected reoport option. 'normal' and 'page' is available.").Error())
 	}
+
 	return shim.Success(byteData)
 }
-
-
 
 
 // 임시평가점수 조회 query 작성 후 추가
