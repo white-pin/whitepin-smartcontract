@@ -44,6 +44,7 @@ func getPageDataWithQueryString(stub shim.ChaincodeStubInterface, queryString st
 		if err != nil {
 			return nil, err
 		}
+		defer resultsIterator.Close()
 	} else {
 		if pageNum > 1 {
 			for i := 0; i < pageNum-1 ; i++ {
@@ -58,6 +59,7 @@ func getPageDataWithQueryString(stub shim.ChaincodeStubInterface, queryString st
 		if err != nil {
 			return nil, err
 		}
+		defer resultsIterator.Close()
 	}
 	buffer, err = constructQueryResponseFromIterator(resultsIterator)
 	if err != nil {
