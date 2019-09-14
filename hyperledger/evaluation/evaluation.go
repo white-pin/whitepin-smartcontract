@@ -17,6 +17,7 @@ type RecordType int
 const RecordTypeUser RecordType = 1
 const RecordTypeTrade RecordType = 2
 const RecordTypeScoreTemp RecordType = 3
+const defaultOrder string = "desc"
 
 // TODO indexing
 // TODO data put, get 공통화
@@ -63,13 +64,23 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "addUser": return t.addUser(stub, args) // 사용자 생성
 	case "queryUser": return t.queryUser(stub, args) // 사용자 조회
 	case "createTrade": return t.createTrade(stub, args) // 거래 생성
+	case "queryTradeWithQueryString" : return t.queryTradeWithQueryString(stub, args) // queryString으로 거래이력 조회. (메소드로 제공하지 않는 기능들에 대해서 조회 가능하도록)
+	case "queryTradeUser" : return t.queryTradeWithUser(stub, args) // 사용자로 거래이력 조회. (판매, 구매, 모두 : sell, buy, all)
+	case "queryTradeUserService" : return t.queryTradeUserService(stub, args) // 사용자, 서비스 코드로 거래이력 조회. (판매, 구매, 모두 : sell, buy, all)
+	case "queryTradeService" : return t.queryTradeService(stub, args) // 서비스 코드로 거래이력 조회.
 	case "queryTradeWithId": return t.queryTradeWithId(stub, args) // 거래 조회
 	case "queryScoreTemp": return t.queryScoreTemp(stub, args) // 임시 평가정수 조회
-	case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
+	//case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
 	case "queryScoreTempWithTradeId": return t.queryScoreTempWithTradeId(stub, args) // 임시 평가정수 조회 (query string 사용, tradeId로만 조회 가능)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구매자)
 	case "enrollTempScore": return t.enrollTempScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구매자)
 	case "enrollScore": return t.enrollScore(stub, args) // 거래 점수 등록 (판매자, 구매자 동시에)
+	// # pagination
+	// trade
+	// # history
+	// user
+	// trade
+	// scoreMeta
 	default:
 		err := errors.Errorf("No matched function. : %s", function)
 		return shim.Error(err.Error())
@@ -195,20 +206,103 @@ func (t *EvaluationChaincode) queryScoreTemp(stub shim.ChaincodeStubInterface, a
 }
 
 
-// 거래 조회 query 작성 후 추가
-// args[0] : query string. (거래는 다양하게 불러올 필요가 있으므로 query string 자체를 변수로 받도록)
-func (t *EvaluationChaincode) queryTradeWithCondition(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+// 거래 조회 query string 사용. (거래는 다양하게 불러올 필요가 있으므로 query string 자체를 변수로 받도록)
+// args[0] : query string.
+func (t *EvaluationChaincode) queryTradeWithQueryString(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	byteData, err := GetTradeWithQueryString(stub, args[0])
+	byteData, err := getQueryString(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
 	return shim.Success(byteData)
 }
+// 거래 조회 (사용자 토큰으로 조회)
+// args[0] : 사용자 정보, UserTkn
+// args[1] : 사용자의 조건 (판매 : "sell", 구매 : "buy", 둘다 : "all")
+// args[2] : 시간에 대한 ordering. (default is desc.)
+func (t *EvaluationChaincode) queryTradeWithUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
+	}
+	ordering := defaultOrder
+	if args[2] != "" {
+		ordering = args[2]
+	}
+	queryString := ""
+	switch args[1] {
+	case "sell" :
+		queryString = "{\"selector\":{\"SellerTkn\":\""+args[0]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+	case "buy" :
+		queryString = "{\"selector\":{\"BuyerTkn\":\""+args[0]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+	case "all" :
+		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+args[0]+"\",\"RecType\":2},{\"BuyerTkn\":\""+args[0]+"\",\"RecType\":2}]},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+	default :
+		return shim.Error(errors.New("Unexpected user condition. It can be 'sell', 'buy' and 'all'").Error())
+	}
+
+	byteData, err := getQueryString(stub, queryString)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(byteData)
+}
+// 거래 조회 (사용자 토큰, 서비스 코드로 조회)
+// args[0] : 사용자 정보, UserTkn
+// args[1] : 서비스 코드, ServiceCode
+// args[2] : 사용자의 조건 (판매 : "sell", 구매 : "buy", 둘다 : "all")
+// args[3] : 시간에 대한 ordering. (default is desc.)
+func (t *EvaluationChaincode) queryTradeUserService(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 4 {
+		return shim.Error("Incorrect number of arguments. Expecting 4")
+	}
+	ordering := defaultOrder
+	if args[3] != "" {
+		ordering = args[3]
+	}
+	queryString := ""
+	switch args[2] {
+	case "sell" :
+		queryString = "{\"selector\":{\"SellerTkn\":\""+args[0]+"\",\"ServiceCode\":\""+args[1]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+	case "buy" :
+		queryString = "{\"selector\":{\"BuyerTkn\":\""+args[0]+"\",\"ServiceCode\":\""+args[1]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+	case "all" :
+		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+args[0]+"\",\"ServiceCode\":\""+args[1]+"\",\"RecType\":2},{\"BuyerTkn\":\""+args[0]+"\",\"ServiceCode\":\""+args[1]+"\",\"RecType\":2}]},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+	default :
+		return shim.Error(errors.New("Unexpected user condition. It can be 'sell', 'buy' and 'all'").Error())
+	}
+	byteData, err := getQueryString(stub, queryString)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(byteData)
+}
+// 거래 조회 (서비스 코드로 조회)
+// args[0] : 서비스 코드, ServiceCode
+// args[1] : 시간에 대한 ordering. (default is desc.)
+func (t *EvaluationChaincode) queryTradeService(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
+	}
+	ordering := defaultOrder
+	if args[1] != "" {
+		ordering = args[1]
+	}
+	queryString := "{\"selector\":{\"ServiceCode\":\""+args[0]+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+
+	byteData, err := getQueryString(stub, queryString)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	return shim.Success(byteData)
+}
+
+
 
 
 // 임시평가점수 조회 query 작성 후 추가

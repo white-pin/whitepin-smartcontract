@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/pkg/errors"
@@ -95,44 +94,6 @@ func GetTradeWithId(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, e
 }
 
 
-// 거래 가져오기 query 필요
-func GetTradeWithQueryString(stub shim.ChaincodeStubInterface, queryString string) ([]byte, error) {
-
-	resultsIterator, err := stub.GetQueryResult(queryString)
-	if err != nil {
-		return nil, err
-	}
-
-	buffer := bytes.Buffer{}
-	buffer.WriteString("[")
-
-	bArrayMemberAlreadyWritten := false
-	for resultsIterator.HasNext() {
-		queryResponse, err := resultsIterator.Next()
-		if err != nil {
-			return nil, err
-		}
-		// Add a comma before array members, suppress it for the first array member
-		if bArrayMemberAlreadyWritten == true {
-			buffer.WriteString(",")
-		}
-		buffer.WriteString("{\"Key\":")
-		buffer.WriteString("\"")
-		buffer.WriteString(queryResponse.Key)
-		buffer.WriteString("\"")
-
-		buffer.WriteString(", \"Record\":")
-		// Record is a JSON object, so we write as-is
-		buffer.WriteString(string(queryResponse.Value))
-		buffer.WriteString("}")
-		bArrayMemberAlreadyWritten = true
-	}
-	buffer.WriteString("]")
-
-	return buffer.Bytes(), nil
-}
-
-
 // 거래 완료하기 (구매자, 판매자 각각) {TradeId, UserTkn}
 func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string) error {
 	var trade Trade
@@ -217,10 +178,10 @@ func EvaluateTrade(stub shim.ChaincodeStubInterface, tradeId string, sellScore [
 		return err
 	}
 
-	err = DelScoreTemp(stub, tradeId)
-	if err != nil {
-		return err
-	}
+	//err = DelScoreTemp(stub, tradeId)
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
