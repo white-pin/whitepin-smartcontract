@@ -1,0 +1,1 @@
+{"index":{"fields":["BuyerTkn","ServiceCode","Date","RecType"]},"ddoc":"indexTradeBuyerServiceDoc", "name":"indexTradeBuyerService","type":"json"}
