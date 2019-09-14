@@ -73,7 +73,7 @@ func constructQueryResponseFromIterator(resultIterator shim.StateQueryIteratorIn
 	bArrayMemberAlreadyWritten := false
 
 	buffer.WriteString("[")
-	if resultIterator.HasNext() {
+	for resultIterator.HasNext() {
 		queryResponse, err := resultIterator.Next()
 		if err != nil {
 			return nil, err

@@ -19,7 +19,6 @@ const RecordTypeTrade RecordType = 2
 const RecordTypeScoreTemp RecordType = 3
 const defaultOrder string = "desc"
 
-// TODO indexing
 // TODO data put, get 공통화
 // TODO Error 발생 공통화
 // TODO 체인코드 로그 구문 추가
