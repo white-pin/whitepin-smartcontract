@@ -92,17 +92,3 @@ func constructQueryResponseFromIterator(resultIterator shim.StateQueryIteratorIn
 
 	return &buffer, nil
 }
-
-//func addPageMetaData(buffer *bytes.Buffer, responseMetadata *pb.QueryResponseMetadata) *bytes.Buffer {
-//
-//	buffer.WriteString("[{\"ResponseMetadata\":{\"RecordsCount\":")
-//	buffer.WriteString("\"")
-//	buffer.WriteString(fmt.Sprintf("%v", responseMetadata.FetchedRecordsCount))
-//	buffer.WriteString("\"")
-//	buffer.WriteString(", \"Bookmark\":")
-//	buffer.WriteString("\"")
-//	buffer.WriteString(responseMetadata.Bookmark)
-//	buffer.WriteString("\"}}]")
-//
-//	return buffer
-//}

@@ -250,8 +250,8 @@ func (t *EvaluationChaincode) queryTradeWithUser(stub shim.ChaincodeStubInterfac
 		queryString = "{\"selector\":{\"SellerTkn\":\""+userTkn+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
 	case "buy" :
 		queryString = "{\"selector\":{\"BuyerTkn\":\""+userTkn+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
-	case "all" :
-		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+userTkn+"\",\"RecType\":2},{\"BuyerTkn\":\""+userTkn+"\",\"RecType\":2}]},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+	case "all" : // 전체 조회는 sort가 안되도록 설계가 됐기 때문에 sorting 불가능.
+		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+userTkn+"\",\"RecType\":2},{\"BuyerTkn\":\""+userTkn+"\",\"RecType\":2}]}}"
 	default :
 		return shim.Error(errors.New("Unexpected user condition. It can be 'sell', 'buy' and 'all'").Error())
 	}
@@ -306,8 +306,8 @@ func (t *EvaluationChaincode) queryTradeUserService(stub shim.ChaincodeStubInter
 		queryString = "{\"selector\":{\"SellerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
 	case "buy" :
 		queryString = "{\"selector\":{\"BuyerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
-	case "all" :
-		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2},{\"BuyerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2}]},\"sort\":[{\"Date\":\""+ordering+"\"}]}"
+	case "all" : // 전체 조회는 sort가 안되도록 설계가 됐기 때문에 sorting 불가능.
+		queryString = "{\"selector\":{\"$or\":[{\"SellerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2},{\"BuyerTkn\":\""+userTkn+"\",\"ServiceCode\":\""+serviceCode+"\",\"RecType\":2}]}}"
 	default :
 		return shim.Error(errors.New("Unexpected user condition. It can be 'sell', 'buy' and 'all'").Error())
 	}
