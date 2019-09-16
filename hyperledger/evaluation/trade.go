@@ -47,12 +47,12 @@ func CreateTrade(stub shim.ChaincodeStubInterface, tradeId string, serviceCode s
 	}
 
 	// userTkn 검증
-	_, err = GetUser(stub, sellerTkn)
+	_, err = getDataWithKey(stub, sellerTkn)
 	if err != nil {
 		err := errors.Errorf("Seller does not exist : %s", sellerTkn)
 		return err
 	}
-	_, err = GetUser(stub, buyerTkn)
+	_, err = getDataWithKey(stub, buyerTkn)
 	if err != nil {
 		err := errors.Errorf("Buyer does not exist : %s", buyerTkn)
 		return err
