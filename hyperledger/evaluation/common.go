@@ -2,10 +2,30 @@ package main
 
 import (
 	"bytes"
+	"github.com/pkg/errors"
 	"log"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
+
+func getDataWithKey(stub shim.ChaincodeStubInterface, key string) ([]byte, error) {
+	log.Println("--- Getting data with key INIT ---")
+
+	byteData, err := stub.GetState(key)
+	if err != nil {
+		err = errors.Errorf("Failed to get data with key : Key \"%s\"", key)
+		return nil, err
+	}
+	if byteData == nil {
+		err = errors.Errorf("There is no data with key : Key \"%s\"", key)
+		return nil, err
+	}
+
+	log.Println("--- Getting data with key FINISHED ---")
+
+	return byteData, nil
+}
+
 
 func getQueryString(stub shim.ChaincodeStubInterface, queryString string) ([]byte, error) {
 	log.Println("--- Getting query result INIT ---")

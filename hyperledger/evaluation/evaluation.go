@@ -19,9 +19,6 @@ const RecordTypeTrade RecordType = 2
 const RecordTypeScoreTemp RecordType = 3
 const defaultOrder string = "desc"
 
-// TODO data put, get 공통화
-// TODO Error 발생 공통화
-// TODO 체인코드 로그 구문 추가
 // ===================================================================================
 // Main
 // ===================================================================================
@@ -64,25 +61,18 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryUser": return t.queryUser(stub, args) // 사용자 조회
 	case "createTrade": return t.createTrade(stub, args) // 거래 생성
 	case "queryTradeWithQueryString" : return t.queryTradeWithQueryString(stub, args) // queryString으로 거래이력 조회. (메소드로 제공하지 않는 기능들에 대해서 조회 가능하도록)
-	case "queryTradeUser" : return t.queryTradeWithUser(stub, args) // 사용자로 거래이력 조회. (판매, 구매, 모두 : sell, buy, all)
-	case "queryTradeUserService" : return t.queryTradeUserService(stub, args) // 사용자, 서비스 코드로 거래이력 조회. (판매, 구매, 모두 : sell, buy, all)
-	case "queryTradeService" : return t.queryTradeService(stub, args) // 서비스 코드로 거래이력 조회.
+	case "queryTradeWithUser" : return t.queryTradeWithUser(stub, args) // 사용자로 거래이력 조회. (판매, 구매, 모두 : sell, buy, all)
+	case "queryTradeWithUserService" : return t.queryTradeWithUserService(stub, args) // 사용자, 서비스 코드로 거래이력 조회. (판매, 구매, 모두 : sell, buy, all)
+	case "queryTradeWithService" : return t.queryTradeWithService(stub, args) // 서비스 코드로 거래이력 조회.
 	case "queryTradeWithId": return t.queryTradeWithId(stub, args) // 거래 조회
 	case "queryScoreTemp": return t.queryScoreTemp(stub, args) // 임시 평가정수 조회
-	//case "queryTradeWithCondition": return t.queryTradeWithCondition(stub, args) // 거래 조회 (query string 사용)
 	case "queryScoreTempWithTradeId": return t.queryScoreTempWithTradeId(stub, args) // 임시 평가정수 조회 (query string 사용, tradeId로만 조회 가능)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구매자)
 	case "enrollTempScore": return t.enrollTempScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구매자)
 	case "enrollScore": return t.enrollScore(stub, args) // 거래 점수 등록 (판매자, 구매자 동시에)
-	// # pagination
-	// trade
-	// # history
-	// user
-	// trade
-	// scoreMeta
+	// TODO history
 	default:
-		err := errors.Errorf("No matched function. : %s", function)
-		return shim.Error(err.Error())
+		return shim.Error(errors.Errorf("No matched function. : %s", function).Error())
 	}
 }
 
@@ -137,7 +127,7 @@ func (t *EvaluationChaincode) queryUser(stub shim.ChaincodeStubInterface, args [
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	byteData, err := GetUser(stub, args[0])
+	byteData, err := getDataWithKey(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -191,7 +181,7 @@ func (t *EvaluationChaincode) queryScoreTemp(stub shim.ChaincodeStubInterface, a
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	scoreTemp, err := GetScoreTempWithKey(stub, args[0])
+	scoreTemp, err := getDataWithKey(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -282,7 +272,7 @@ func (t *EvaluationChaincode) queryTradeWithUser(stub shim.ChaincodeStubInterfac
 // args[5] (optional) : 한 페이지 사이즈
 // args[6] (optional) : 페이지 번호
 // args[7] (optional) : 북마크 (첫 페이지 조회 또는 default는 "")
-func (t *EvaluationChaincode) queryTradeUserService(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *EvaluationChaincode) queryTradeWithUserService(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 5 && len(args) != 8 {
 		return shim.Error("Incorrect number of arguments. Expecting 5 or 8")
 	}
@@ -336,7 +326,7 @@ func (t *EvaluationChaincode) queryTradeUserService(stub shim.ChaincodeStubInter
 // args[3] (optional) : 한 페이지 사이즈
 // args[4] (optional) : 페이지 번호
 // args[5] (optional) : 북마크 (첫 페이지 조회 또는 default는 "")
-func (t *EvaluationChaincode) queryTradeService(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *EvaluationChaincode) queryTradeWithService(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 3 && len(args) != 6 {
 		return shim.Error("Incorrect number of arguments. Expecting 3 or 6")
 	}

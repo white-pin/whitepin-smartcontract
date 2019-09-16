@@ -226,17 +226,17 @@ func UpdateTotalScore(stub shim.ChaincodeStubInterface, sellScore []int, buyScor
 
 
 // 사용자 조회
-func GetUser(stub shim.ChaincodeStubInterface, userTkn string) ([]byte, error){
-
-	byteData, err := stub.GetState(userTkn)
-	if err != nil {
-		err = errors.Errorf("Failed to get User : UserTkn is \"%s\"", userTkn)
-		return nil, err
-	}
-	if byteData == nil {
-		err := errors.Errorf("There is no user : UserTkn \"%s\"", userTkn)
-		return nil, err
-	}
-
-	return byteData, nil
-}
+//func GetUser(stub shim.ChaincodeStubInterface, userTkn string) ([]byte, error){
+//
+//	byteData, err := stub.GetState(userTkn)
+//	if err != nil {
+//		err = errors.Errorf("Failed to get User : UserTkn is \"%s\"", userTkn)
+//		return nil, err
+//	}
+//	if byteData == nil {
+//		err := errors.Errorf("There is no user : UserTkn \"%s\"", userTkn)
+//		return nil, err
+//	}
+//
+//	return byteData, nil
+//}

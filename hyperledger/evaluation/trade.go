@@ -81,7 +81,7 @@ func CreateTrade(stub shim.ChaincodeStubInterface, tradeId string, serviceCode s
 
 // 거래 가져오기 (TradeId : key)
 func GetTradeWithId(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
-	trade, err := getTrade(stub, tradeId)
+	trade, err := getDataWithKey(stub, tradeId)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func GetTradeWithId(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, e
 func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string) error {
 	var trade Trade
 	TradeDoneFlag := false // ScoreTemp review 기간 설정
-	bytesData, err := getTrade(stub, tradeId)
+	bytesData, err := getDataWithKey(stub, tradeId)
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func CloseTrade(stub shim.ChaincodeStubInterface, tradeId string, userTkn string
 func EvaluateTrade(stub shim.ChaincodeStubInterface, tradeId string, sellScore []int, buyScore []int) error {
 	var trade Trade
 
-	bytesData, err := getTrade(stub, tradeId)
+	bytesData, err := getDataWithKey(stub, tradeId)
 	if err != nil {
 		return err
 	}
@@ -188,19 +188,19 @@ func EvaluateTrade(stub shim.ChaincodeStubInterface, tradeId string, sellScore [
 
 
 
-func getTrade(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
-	byteData, err := stub.GetState(tradeId)
-	if err != nil {
-		err = errors.Errorf("Failed to get data. : TradeId is \"%s\"", tradeId)
-		return nil, err
-	}
-	if byteData == nil {
-		err := errors.Errorf("There is no trade : TradeId is \"%s\"", tradeId)
-		return nil, err
-	}
-
-	return byteData, nil
-}
+//func getTrade(stub shim.ChaincodeStubInterface, tradeId string) ([]byte, error) {
+//	byteData, err := stub.GetState(tradeId)
+//	if err != nil {
+//		err = errors.Errorf("Failed to get data. : TradeId is \"%s\"", tradeId)
+//		return nil, err
+//	}
+//	if byteData == nil {
+//		err := errors.Errorf("There is no trade : TradeId is \"%s\"", tradeId)
+//		return nil, err
+//	}
+//
+//	return byteData, nil
+//}
 
 func putTrade(stub shim.ChaincodeStubInterface, trade Trade, tradeId string) error {
 	inputData, err := json.Marshal(trade)
