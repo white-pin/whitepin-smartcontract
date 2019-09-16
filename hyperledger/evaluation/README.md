@@ -36,6 +36,20 @@
 사용자가 상대방의 점수를 등록하지 않은 경우, 상대방의 점수는 전부 0점처리되며 집계에 합산하지 않는다. SellEx와 BuyEx는 판매, 구매시 상대방으로부터 평가 받지 않은 거래의 양이다. 
 따라서 구매자의 경우 BuyEx, 판매자의 경우 SellEx가 +1 처리된다. 이를 감안하여 평균을 계산할때 다음과 같은 식으로 계산한다.
 
+---
+
+### Data 저장
+
+`TradeId`는 무작위로 32자리 해시를 생성하여 저장한다. 해시임을 표현하기 위하여 `0x` 를 붙여 저장한다.  
+임시 평가점수는 **AES256 GCM**모드로 암호화하여 저장한다.
+암호화시 필요한 키는 길이에 상관없는 문자열로 받으며, 해당 문자열을 **SHA256**으로 해시하여 32자리의 AES256용 키를 생성한다.  
+GCM 모드에서 사용되는 `Nonce` 값은 24자리의 문자열로 받으며, go에서 사용하는 time.Time()의 시간포맷을 이용하여 yyyymmdd**A**HHMMSSNNNNNNNNN 의 24자리로 생성한다.
+중간의 **A** 는 24자리를 맞춰주기 위해 넣어준 고정값이다.  
+생성한 문자열을 decoding 하여 12자리의 16진수 문자열로 변환하여 실제 **AES256 GCM**모드에서 사용할 수 있는 `Nonce`로 변경한다.
+ 
+---
+
+
 
 ###### 예시
 ```
@@ -52,10 +66,8 @@
 
 ---
 
-### Data-set
-
-#### User
-
+### User
+#### Data-set
 ###### 설명
 ```
 RecType : 데이터 셋의 성격을 구분하는 ID (User는 1)
@@ -112,8 +124,48 @@ TradeSum : 전체 거래 평가점수의 합
 }
 ```
 
-#### Trade
+#### Test
 
+#### 사용자 생성
+
+###### 설명
+```
+peer chaincode invoke -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["addUser","[UserTkn]"]}'
+```
+
+###### 예시
+```
+peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["addUser","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD"]}'
+```
+ 
+#### 사용자 조회
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["queryUser","[UserTkn]"]}'
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args": ["queryUser","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD"]}';
+```
+
+#### **전체 내용 조회**
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args": ["queryUser","TOTAL_USER"]}';
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args": ["queryUser","TOTAL_USER"]}';
+```
+
+---
+
+### Trade
+#### Data-set
 ###### 설명
 
 ```
@@ -155,58 +207,8 @@ Score : 거래에 대한 평가 점수
 }
 ```
 
-#### ScoreTemp
+#### Test
 
-###### 설명
-```
-RecType : 데이터 셋의 성격을 구분하는 ID (ScoreTemp는 3)
-ScoreKey : 임시 평가점수에 대한 키로 사용되며 무작위 값이다. (data-set key)
-TradeId : 거래에 대한 ID이며 hash값을 문자열로 저장한다. (Trade data-set과 동일)
-Score : 거래에 대한 상호 평가 점수.
-    SellScore : 판매자의 평가 점수. (구매자가 판매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서) 
-    BuyScore : 구매자의 평가 점수. (판매자가 구매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서)
-```
-
-###### 예시
-```
-{
-    RecType:3
-    ScoreKey:"0x0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4"
-    TradeId:"0xA665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3"
-    Score:{
-        SellScore:"BE736DE7249081C95A41CBAF762A92B95E280DE155CACBFBF480E0059FAF88A6",
-        BuyScore:"C78BBE24FCC51F8900F2D50FF4894A2136C6FBCF2CE321FD0D94C78E5F234C68"
-    }
-}
-```
-
----
-
-### Data 저장
-
-`TradeId`는 무작위로 32자리 해시를 생성하여 저장한다. 해시임을 표현하기 위하여 `0x` 를 붙여 저장한다.  
-임시 평가점수는 **AES256 GCM**모드로 암호화하여 저장한다.
-암호화시 필요한 키는 길이에 상관없는 문자열로 받으며, 해당 문자열을 **SHA256**으로 해시하여 32자리의 AES256용 키를 생성한다.  
-GCM 모드에서 사용되는 `Nonce` 값은 24자리의 문자열로 받으며, go에서 사용하는 time.Time()의 시간포맷을 이용하여 yyyymmdd**A**HHMMSSNNNNNNNNN 의 24자리로 생성한다.
-중간의 **A** 는 24자리를 맞춰주기 위해 넣어준 고정값이다.  
-생성한 문자열을 decoding 하여 12자리의 16진수 문자열로 변환하여 실제 **AES256 GCM**모드에서 사용할 수 있는 `Nonce`로 변경한다.
- 
----
-
-### Test 방법
-
-#### 사용자 생성
-
-###### 설명
-```
-peer chaincode invoke -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["addUser","[UserTkn]"]}'
-```
-
-###### 예시
-```
-peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["addUser","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD"]}'
-```
- 
 #### 거래 생성
 
 ###### 설명
@@ -230,3 +232,204 @@ peer chaincode invoke -C [channel_name] --peerAddresses [peer_DNS:port] -n [chai
 ```
 peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["closeTrade","0xF6E0A1E2AC41945A9AA7FF8A8AAA0CEBC12A3BCC981A929AD5CF810A090E11AE","code01","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","0xDF7E70E5021544F4834BBEE64A9E3789FEBC4BE81470DF629CAD6DDB03320A5C"]}'
 ```
+
+#### 거래 점수 등록 (둘 다 평가를 마친 이후에)
+
+###### 설명
+```
+peer chaincode invoke -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["enrollScore","[TradeId]","[AES-key]"]}'
+```
+
+###### 예시
+```
+peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["enrollScore","0xF6E0A1E2AC41945A9AA7FF8A8AAA0CEBC12A3BCC981A929AD5CF810A090E11AE","key1234"]}';
+```
+
+#### 거래 조회 (key 사용(TradeID))
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["createTrade","[TradeId]","[ServiceCode]","[SellerTkn]","[BuyerTkn]"]}'
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["createTrade","0xF6E0A1E2AC41945A9AA7FF8A8AAA0CEBC12A3BCC981A929AD5CF810A090E11AE","code01","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","0xDF7E70E5021544F4834BBEE64A9E3789FEBC4BE81470DF629CAD6DDB03320A5C"]}'
+```
+
+#### 거래 조회 (query string 사용, 테스트용 메소드)
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["createTrade","[TradeId]","[ServiceCode]","[SellerTkn]","[BuyerTkn]"]}'
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["createTrade","0xF6E0A1E2AC41945A9AA7FF8A8AAA0CEBC12A3BCC981A929AD5CF810A090E11AE","service01","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","0xDF7E70E5021544F4834BBEE64A9E3789FEBC4BE81470DF629CAD6DDB03320A5C"]}'
+```
+
+#### **내부 query string을 통한 거래 조회시 parameter**
+[sell / buy / all] : 판매내역 조회 / 구매내역 조회 / 전체 조회  
+[normal / page] : 페이징 없이 전체 조회(1000개) / 페이지로 조회  
+PageSize : 한 페이지에 보여줄 데이터의 양  
+PageNum : 페이지 번호  
+Bookmark : 페이지를 점프하기 위해 필요한 북마크. 알면 쓰면 되지만 거의 대부분의 경우 바로 알 수 없으므로 ""로 받으면 됨.
+
+#### 거래 조회 (사용자로 조회)
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["queryTradeWithUser","[UserTkn]","[sell / buy / all]","[asc / desc]","[normal / page]","[PageSize]","[PageNum]","[Bookmark]"]}';
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryTradeWithUser","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","sell","desc","normal","","",""]}';
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryTradeWithUser","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","buy","asc","page","3","2",""]}'
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryTradeWithUser","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","all","","page","3","2",""]}'
+* all의 경우 desc, asc 사용 불가능. (sort 불가능)
+```
+
+#### 거래 조회 (사용자, 서비스코드로 조회)
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["queryTradeWithUserService","[UserTkn]","[ServiceCode]","[sell / buy / all]","[asc / desc]","[normal / page]","[PageSize]","[PageNum]","[Bookmark]"]}';
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryTradeWithUserService","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","service01","sell","desc","normal","","",""]}';
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryTradeWithUserService","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","service01","buy","asc","page","3","2",""]}'
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryTradeWithUserService","0x559AEAD08264D5795D3909718CDD05ABD49572E84FE55590EEF31A88A08FDFFD","service01","all","","page","3","2",""]}'
+* all의 경우 desc, asc 사용 불가능. (sort 불가능)
+```
+
+#### 거래 조회 (서비스코드로 조회)
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["queryTradeWithService","[ServiceCode]","[sell / buy / all]","[asc / desc]","[normal / page]","[PageSize]","[PageNum]","[Bookmark]"]}';
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryTradeWithService","code01","desc","normal","","",""]}';
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryTradeWithService","code01","asc","page","3","2",""]}';
+```
+
+---
+
+### ScoreTemp
+#### Data-set
+###### 설명
+```
+RecType : 데이터 셋의 성격을 구분하는 ID (ScoreTemp는 3)
+ScoreKey : 임시 평가점수에 대한 키로 사용되며 무작위 값이다. (data-set key)
+TradeId : 거래에 대한 ID이며 hash값을 문자열로 저장한다. (Trade data-set과 동일)
+Score : 거래에 대한 상호 평가 점수.
+    SellScore : 판매자의 평가 점수. (구매자가 판매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서) 
+    BuyScore : 구매자의 평가 점수. (판매자가 구매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서)
+```
+
+###### 예시
+```
+{
+    RecType:3
+    ScoreKey:"0x0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4"
+    TradeId:"0xA665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3"
+    Score:{
+        SellScore:"BE736DE7249081C95A41CBAF762A92B95E280DE155CACBFBF480E0059FAF88A6",
+        BuyScore:"C78BBE24FCC51F8900F2D50FF4894A2136C6FBCF2CE321FD0D94C78E5F234C68"
+    }
+}
+```
+
+#### Test
+
+#### 임시 평가 점수 등록 (생성은 거래 생성시 자동으로 생성됨. 별도의 메소드 제공 없음)
+
+###### 설명
+```
+peer chaincode invoke -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["enrollTempScore","[TradeId]","[UserTkn]","[A score, B score, C score]","[AES-key]"]}';
+```
+
+###### 예시
+```
+peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["enrollTempScore","AB01","BB","[4,4,4]","key1234"]}';
+```
+
+#### 임시 평가 점수 조회 (key, 테스트용 메소드)
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["queryScoreTemp","[ScoreTempKey]"]}';
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryScoreTemp","AB01_ScoreTemp"]}';
+```
+
+#### 임시 평가 점수 조회 (TradeId)
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["queryScoreTempWithTradeId","[TradeId]"]}';
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["queryScoreTempWithTradeId","AB01"]}';
+```
+
+---
+
+### Properties
+#### Data-set
+###### 설명
+```
+EvaluationLimit : 평가 입력 기다려주는 시간 (default 14일, 1,209,600 = 14 * 24 * 60 * 60) 이시간 이후에는 0점 처리
+OpenScoreDuration : 거래 당사자들의 모든 평가 입력 후 공개하기 까지 걸리는 시간 (default 5일, 432,000 = 5 * 24 * 60 * 60)
+```
+
+###### 예시 (2분(120초), 30초)
+```
+{
+    EvaluationLimit:120000000000
+    OpenScoreDuration:30000000000
+}
+```
+
+
+#### Test
+
+#### Property 조회
+
+###### 설명
+```
+peer chaincode query -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["getProperties"]}';
+```
+
+###### 예시
+```
+peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["getProperties"]}';
+```
+
+#### Property 변경
+
+###### 설명
+```
+peer chaincode invoke -C [channel_name] --peerAddresses [peer_DNS:port] -n [chaincode_name] -c '{"Args":["setProperties",[evaluation_waiting_duration]","[enroll_score_delay]"]}';
+```
+
+###### 예시
+```
+# 시연용 (2분, 30초)
+peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["setProperties","120","30"]}';
+# 운영용 (14일, 5일)
+peer chaincode invoke -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n whitepin -c '{"Args":["setProperties","1209600","432000"]}';
+```
+
+---
