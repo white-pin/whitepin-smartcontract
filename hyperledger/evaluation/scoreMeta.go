@@ -263,7 +263,7 @@ func GetScoreTempForBatch(stub shim.ChaincodeStubInterface) ([]byte, error) {
 		}
 
 		// 만료시간이 지난경우 isExpired true로 변경
-		if scoreTemp.ExpiryDate.After(time.Now()) {
+		if time.Now().After(scoreTemp.ExpiryDate) {
 			scoreTemp.IsExpired = true
 			inputData, err := json.Marshal(byteData)
 			if err != nil {
