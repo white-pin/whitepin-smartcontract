@@ -152,6 +152,22 @@ func (t *EvaluationChaincode) createTrade(stub shim.ChaincodeStubInterface, args
 		return shim.Error(err.Error())
 	}
 
+
+	// Update User score 구매자, 판매자, 전체
+	err = InitUserScore(stub, args[2], "sell")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = InitUserScore(stub, args[3], "buy")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	err = InitUserScore(stub, TotalUser, "tot")
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+
 	fmt.Printf("Add a new trade [%s] finished.\n", args[0])
 	return shim.Success(nil)
 }

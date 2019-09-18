@@ -40,6 +40,49 @@ type User struct {
 const TotalUser string = "TOTAL_USER"
 
 
+// 거래 생성시 사용자 데이터 Init (SellAmt/BuyAmt +1)
+func InitUserScore(stub shim.ChaincodeStubInterface, userTkn string, division string) error {
+	var user User
+	byteData, err := getDataWithKey(stub, userTkn)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(byteData, &user)
+	if err != nil {
+		return errors.New("Failed to json decoding.")
+	}
+
+	switch division {
+	case "sell":
+		user.SellAmt++
+		user.SellEx++
+	case "buy":
+		user.BuyAmt++
+		user.BuyEx++
+	case "tot":
+		user.SellAmt++
+		user.SellEx++
+		user.BuyAmt++
+		user.BuyEx++
+	default:
+		return errors.New("Not allowed division detected.")
+	}
+
+	inputData, err := json.Marshal(user)
+	if err != nil {
+		return errors.New("Failed to json encoding.")
+	}
+
+	err = stub.PutState(userTkn, inputData)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
 // 사용자 추가
 func AddUser(stub shim.ChaincodeStubInterface, userTkn string) error {
 	var user User
@@ -62,8 +105,7 @@ func AddUser(stub shim.ChaincodeStubInterface, userTkn string) error {
 
 	inputData, err := json.Marshal(user)
 	if err != nil {
-		err = errors.New("Failed to json encoding.")
-		return err
+		return errors.New("Failed to json encoding.")
 	}
 
 	err = stub.PutState(userTkn, inputData)
@@ -99,7 +141,7 @@ func UpdateUserScore(stub shim.ChaincodeStubInterface, userTkn string, score []i
 	// 점수 합산
 	switch division {
 	case "sell":
-		user.SellAmt++
+		//user.SellAmt++
 		user.SellSum.EvalSum01 += score[0]
 		user.SellSum.EvalSum02 += score[1]
 		user.SellSum.EvalSum03 += score[2]
@@ -113,12 +155,12 @@ func UpdateUserScore(stub shim.ChaincodeStubInterface, userTkn string, score []i
 		}
 
 		// 점수가 등록되지 않아서 0 점처리 된 경우
-		if score[0] == 0 && score[1] == 0 && score[2] == 0{
-			user.SellEx++
+		if !(score[0] == 0 && score[1] == 0 && score[2] == 0) {
+			user.SellEx--
 		}
 
 	case "buy":
-		user.BuyAmt++
+		//user.BuyAmt++
 		user.BuySum.EvalSum01 += score[0]
 		user.BuySum.EvalSum02 += score[1]
 		user.BuySum.EvalSum03 += score[2]
@@ -132,8 +174,8 @@ func UpdateUserScore(stub shim.ChaincodeStubInterface, userTkn string, score []i
 		}
 
 		// 점수가 등록되지 않아서 0 점처리 된 경우
-		if score[0] == 0 && score[1] == 0 && score[2] == 0{
-			user.BuyEx++
+		if !(score[0] == 0 && score[1] == 0 && score[2] == 0) {
+			user.BuyEx--
 		}
 	default:
 		err := errors.New("Division is wrong. Available value is \"sell\" and \"buy\"")
@@ -175,7 +217,7 @@ func UpdateTotalScore(stub shim.ChaincodeStubInterface, sellScore []int, buyScor
 		return err
 	}
 
-	tot.SellAmt++
+	//tot.SellAmt++
 	tot.SellSum.EvalSum01 += sellScore[0]
 	tot.SellSum.EvalSum02 += sellScore[1]
 	tot.SellSum.EvalSum03 += sellScore[2]
@@ -188,11 +230,11 @@ func UpdateTotalScore(stub shim.ChaincodeStubInterface, sellScore []int, buyScor
 		tot.TradeSum.TotSum += item
 	}
 	// 점수가 등록되지 않아서 0 점처리 된 경우
-	if sellScore[0] == 0 && sellScore[1] == 0 && sellScore[2] == 0{
-		tot.SellEx++
+	if !(sellScore[0] == 0 && sellScore[1] == 0 && sellScore[2] == 0) {
+		tot.SellEx--
 	}
 
-	tot.BuyAmt++
+	//tot.BuyAmt++
 	tot.BuySum.EvalSum01 += buyScore[0]
 	tot.BuySum.EvalSum02 += buyScore[1]
 	tot.BuySum.EvalSum03 += buyScore[2]
@@ -205,8 +247,8 @@ func UpdateTotalScore(stub shim.ChaincodeStubInterface, sellScore []int, buyScor
 		tot.TradeSum.TotSum += item
 	}
 	// 점수가 등록되지 않아서 0 점처리 된 경우
-	if buyScore[0] == 0 && buyScore[1] == 0 && buyScore[2] == 0{
-		tot.BuyEx++
+	if !(buyScore[0] == 0 && buyScore[1] == 0 && buyScore[2] == 0) {
+		tot.BuyEx--
 	}
 
 	inputData, err := json.Marshal(tot)
