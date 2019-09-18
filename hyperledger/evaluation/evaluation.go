@@ -69,7 +69,8 @@ func (t *EvaluationChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Respon
 	case "queryScoreTempWithTradeId": return t.queryScoreTempWithTradeId(stub, args) // 임시 평가정수 조회 (query string 사용, tradeId로만 조회 가능)
 	case "closeTrade": return t.closeTrade(stub, args) // 거래 완료 처리 (판매자 또는 구매자)
 	case "enrollTempScore": return t.enrollTempScore(stub, args) // 임시 평가점수 등록 (판매자 또는 구매자)
-	case "enrollScore": return t.enrollScore(stub, args) // 거래 점수 등록 (판매자, 구매자 동시에)
+	case "enrollScore": return t.enrollScore(stub, args) // 거래 점수 등록 (판매자, 구매자 동시에) 배치가 사용할 함수.
+	case "getNotSyncScoreTemp": return t.getNotSyncScoreTemp(stub) // 아직 등록되지 않은 임시 점수 조회. 배치가 사용할 함수.
 	// TODO history
 	default:
 		return shim.Error(errors.Errorf("No matched function. : %s", function).Error())
@@ -584,5 +585,22 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 		return shim.Error(err.Error())
 	}
 
+	// UpdateScoreTempSync state. (배치가 조회하지 않도록 변경)
+	//err = UpdateSyncState(stub, trade.TradeId)
+	//if err != nil {
+	//	return shim.Error(err.Error())
+	//}
+
 	return shim.Success(nil)
+}
+
+
+func (t *EvaluationChaincode) getNotSyncScoreTemp(stub shim.ChaincodeStubInterface) pb.Response {
+
+	byteData, err := GetScoreTempForBatch(stub)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(byteData)
 }

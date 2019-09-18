@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -22,6 +23,8 @@ type ScoreTemp struct {
 		SellScore string `json:"SellScore"`
 		BuyScore string `json:"BuyScore"`
 	} `json:"Score"`
+	IsExpired bool `json:"IsExpired"`
+	//Sync bool `json:"Sync"`
 }
 
 
@@ -32,6 +35,8 @@ func AddScoreTemp(stub shim.ChaincodeStubInterface, scoreKey string, tradeId str
 	scoreTemp.RecType = RecordTypeScoreTemp
 	scoreTemp.ScoreKey = scoreKey
 	scoreTemp.TradeId = tradeId
+	scoreTemp.IsExpired = false
+	//scoreTemp.Sync = false
 
 	// 같은 scoreKey로 이미 임시 점수를 생성했는지 확인
 	_, err := getDataWithKey(stub, scoreKey)
@@ -53,23 +58,6 @@ func AddScoreTemp(stub shim.ChaincodeStubInterface, scoreKey string, tradeId str
 
 	return nil
 }
-
-
-// 점수 가져오기 (key)
-//func GetScoreTempWithKey(stub shim.ChaincodeStubInterface, scoreKey string) ([]byte, error) {
-//
-//	byteData, err := stub.GetState(scoreKey)
-//	if err != nil {
-//		err = errors.Errorf("Failed to get Score Temp : ScoreKey \"%s\"", scoreKey)
-//		return nil, err
-//	}
-//	if byteData == nil {
-//		err = errors.Errorf("There is no Score Temp : ScoreKey \"%s\"", scoreKey)
-//		return nil, err
-//	}
-//
-//	return byteData, nil
-//}
 
 
 // 점수 설정 (query) division : "sell", "buy". sell인 경우는 판매자의 점수이고(구매자가 매긴 점수), buy인 경우는 구매자의 점수이다.(판매자가 매긴 점수)
@@ -211,4 +199,84 @@ func GetScoreTempWithTradeId(stub shim.ChaincodeStubInterface, tradeId string) (
 	defer resultsIterators.Close()
 
 	return byteData, nil
+}
+
+
+// change sync state
+//func UpdateSyncState(stub shim.ChaincodeStubInterface, tradeId string) error {
+//	var scoreTemp ScoreTemp
+//
+//	byteData, err := GetScoreTempWithTradeId(stub, tradeId)
+//	if err != nil {
+//		return err
+//	}
+//
+//	err = json.Unmarshal(byteData, &scoreTemp)
+//	if err != nil {
+//		return err
+//	}
+//
+//	scoreTemp.Sync = true
+//
+//	inputData, err := json.Marshal(byteData)
+//	if err != nil {
+//		return err
+//	}
+//
+//	err = stub.PutState(scoreTemp.ScoreKey, inputData)
+//	if err != nil {
+//		return err
+//	}
+//
+//	return nil
+//}
+
+
+// get function for batch
+func GetScoreTempForBatch(stub shim.ChaincodeStubInterface) ([]byte, error) {
+	buffer := bytes.Buffer{}
+	queryString := "{\"selector\":{\"RecType\":3}}"
+
+	resultsIterators, err := stub.GetQueryResult(queryString)
+	if err != nil {
+		err = errors.Errorf("Failed to get Trade : query string is wrong : \"%s\"", queryString)
+		return nil, err
+	}
+
+	buffer.WriteString("[")
+	bArrayMemberAlreadyWritten := false
+	if resultsIterators.HasNext() {
+		response, err := resultsIterators.Next()
+		if err != nil {
+			return nil, err
+		}
+		// Add a comma before array members, suppress it for the first array member
+		if bArrayMemberAlreadyWritten == true {
+			buffer.WriteString(",")
+		}
+
+		byteData := response.Value
+		var scoreTemp ScoreTemp
+		err = json.Unmarshal(byteData, &scoreTemp)
+		if err != nil {
+			return nil, err
+		}
+
+		// 만료시간이 지난경우 isExpired true로 변경
+		if scoreTemp.ExpiryDate.After(time.Now()) {
+			scoreTemp.IsExpired = true
+			inputData, err := json.Marshal(byteData)
+			if err != nil {
+				return nil, err
+			}
+			stub.PutState(scoreTemp.ScoreKey, inputData)
+		}
+
+		buffer.Write(response.Value)
+		bArrayMemberAlreadyWritten = true
+	}
+	defer resultsIterators.Close()
+	buffer.WriteString("]")
+
+	return buffer.Bytes(), nil
 }

@@ -178,10 +178,10 @@ func EvaluateTrade(stub shim.ChaincodeStubInterface, tradeId string, sellScore [
 		return err
 	}
 
-	//err = DelScoreTemp(stub, tradeId)
-	//if err != nil {
-	//	return err
-	//}
+	err = DelScoreTemp(stub, tradeId)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
