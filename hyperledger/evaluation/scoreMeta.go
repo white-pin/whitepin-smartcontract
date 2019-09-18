@@ -245,7 +245,7 @@ func GetScoreTempForBatch(stub shim.ChaincodeStubInterface) ([]byte, error) {
 
 	buffer.WriteString("[")
 	bArrayMemberAlreadyWritten := false
-	if resultsIterators.HasNext() {
+	for resultsIterators.HasNext() {
 		response, err := resultsIterators.Next()
 		if err != nil {
 			return nil, err
