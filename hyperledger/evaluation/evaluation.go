@@ -541,7 +541,7 @@ func (t *EvaluationChaincode) enrollScore(stub shim.ChaincodeStubInterface, args
 
 	// 복호화 (buy)
 	var buyScorePlainTxt string
-	if !(scoreTemp.Score.SellScore == "") {
+	if !(scoreTemp.Score.BuyScore == "") {
 		aes_gcm.chipherTxt = scoreTemp.Score.BuyScore // "[3,4,5]" 의 암호화된 format
 		err = aes_gcm.GCM_decrypt()
 		if err != nil {
