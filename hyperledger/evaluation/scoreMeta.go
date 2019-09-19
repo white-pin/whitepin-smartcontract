@@ -17,7 +17,6 @@ type ScoreTemp struct {
 	RecType RecordType `json:"RecType"` // ScoreTemp : 3
 	ScoreKey string `json:"ScoreKey"`
 	TradeId string `json:"TradeId"`
-	UserTkn string `json:"UserTkn"`
 	ExpiryDate time.Time `json:"ExpiryDate"`
 	Score struct {
 		SellScore string `json:"SellScore"`
@@ -262,7 +261,7 @@ func GetScoreTempForBatch(stub shim.ChaincodeStubInterface) ([]byte, error) {
 			return nil, err
 		}
 
-		// 만료시간이 지났고, default time이 아닌 경우 isExpired true로 변경
+		// 만료시간이 지났고, default time이 아닌 경우 isExpired true로 변경해서 return
 		if time.Now().After(scoreTemp.ExpiryDate) && !scoreTemp.ExpiryDate.Equal(time.Time{}) {
 			scoreTemp.IsExpired = true
 			inputData, err := json.Marshal(scoreTemp)
@@ -270,10 +269,12 @@ func GetScoreTempForBatch(stub shim.ChaincodeStubInterface) ([]byte, error) {
 				return nil, err
 			}
 
-			stub.PutState(scoreTemp.ScoreKey, inputData)
+			buffer.Write(inputData)
+		} else {
+			buffer.Write(response.Value)
 		}
 
-		buffer.Write(response.Value)
+
 		bArrayMemberAlreadyWritten = true
 	}
 	defer resultsIterators.Close()

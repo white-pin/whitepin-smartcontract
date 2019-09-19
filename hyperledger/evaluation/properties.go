@@ -13,10 +13,10 @@ type Properties struct {
 }
 
 const propertyKey string = "PROPERTIES"
-//const defaultEvaluationLimit string = "120s" // 2분, 초단위 (시연)
-//const defaultOpenScoreDuration string = "30s" // 10초, 초단위 (시연)
-const defaultEvaluationLimit string = "1209600s" // 14일, 초단위 (테스트)
-const defaultOpenScoreDuration string = "432000s" // 5일, 초단위 (테스트)
+const defaultEvaluationLimit string = "120s" // 2분, 초단위 (시연)
+const defaultOpenScoreDuration string = "30s" // 10초, 초단위 (시연)
+//const defaultEvaluationLimit string = "1209600s" // 14일, 초단위 (테스트)
+//const defaultOpenScoreDuration string = "432000s" // 5일, 초단위 (테스트)
 
 func GetProperties (stub shim.ChaincodeStubInterface) (Properties, error) {
 	var prpty Properties

@@ -328,9 +328,11 @@ peer chaincode query -C ch1 --peerAddresses peer0.peerorg1.testnet.com:7051 -n w
 RecType : 데이터 셋의 성격을 구분하는 ID (ScoreTemp는 3)
 ScoreKey : 임시 평가점수에 대한 키로 사용되며 무작위 값이다. (data-set key)
 TradeId : 거래에 대한 ID이며 hash값을 문자열로 저장한다. (Trade data-set과 동일)
+ExpiryDate : 평가를 받기위한 만료 시간. 이 시간이 지나면 전부 0점 처리하여 공개한다.
 Score : 거래에 대한 상호 평가 점수.
     SellScore : 판매자의 평가 점수. (구매자가 판매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서) 
     BuyScore : 구매자의 평가 점수. (판매자가 구매자를 평가한 점수) Trade data-set에 들어갈 점수를 보여주기 전, 점수 전문을 양방향 암호화한 문자열 저장. (공개시점 이전 공개 불가능하도록 하기 위해서)
+IsExpired : 만료됐는지 여부 (false: 만료 안됨, true: 만료됨)
 ```
 
 ###### 예시
@@ -339,10 +341,12 @@ Score : 거래에 대한 상호 평가 점수.
     RecType:3
     ScoreKey:"0x0x03AC674216F3E15C761EE1A5E255F067953623C8B388B4459E13F978D7C846F4"
     TradeId:"0xA665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3"
+    ExpiryDate:"20190904143256"
     Score:{
         SellScore:"BE736DE7249081C95A41CBAF762A92B95E280DE155CACBFBF480E0059FAF88A6",
         BuyScore:"C78BBE24FCC51F8900F2D50FF4894A2136C6FBCF2CE321FD0D94C78E5F234C68"
     }
+    IsExpired:false
 }
 ```
 
